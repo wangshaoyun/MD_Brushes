@@ -1,0 +1,281 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+300	subroutines.f90	/^			write(30,300) pos(i,1), pos(i,2), pos(i,3), pos(i,4)$/;"	l	subroutine:write_pos	file:
+310	subroutines.f90	/^			write(31,310) pos(i,1), pos(i,2), pos(i,3), pos(i,4)$/;"	l	subroutine:write_pos1	file:
+310	subroutines.f90	/^		end do$/;"	l	subroutine:write_hist	file:
+320	subroutines.f90	/^			write(32,320) vel(i,1), vel(i,2), vel(i,3)$/;"	l	subroutine:write_vel	file:
+320	subroutines.f90	/^		end do$/;"	l	subroutine:write_hist	file:
+3201	subroutines.f90	/^		end do$/;"	l	subroutine:write_hist	file:
+330	subroutines.f90	/^			write(33,330) vel(i,1), vel(i,2), vel(i,3)$/;"	l	subroutine:write_vel1	file:
+330	subroutines.f90	/^		end do$/;"	l	subroutine:write_hist	file:
+3301	subroutines.f90	/^		end do$/;"	l	subroutine:write_hist	file:
+340	subroutines.f90	/^		end do$/;"	l	subroutine:write_hist	file:
+350	subroutines.f90	/^		end do$/;"	l	subroutine:write_hist	file:
+360	subroutines.f90	/^	close(36)$/;"	l	subroutine:write_height	file:
+370	subroutines.f90	/^			write(37,370) acc(i,1), acc(i,2), acc(i,3)$/;"	l	subroutine:write_acc	file:
+370	subroutines.f90	/^	360 format(9F17.6)$/;"	l	subroutine:write_height	file:
+380	subroutines.f90	/^			write(38,380) 1.*lj_pair_list(i,1),1.*lj_pair_list(i,2)$/;"	l	subroutine:write_lj_list	file:
+410	subroutines.f90	/^			write(41,410) 1.*real_pair_list(i,1),1.*real_pair_list(i,2)$/;"	l	subroutine:write_real_list	file:
+600	compt_acc.f90	/^		close(60)$/;"	l	subroutine:error_analysis	file:
+BC_PME	compt_acc.f90	/^	complex (kind=8), allocatable, dimension(:,:,:), private :: BC_PME$/;"	v	module:compute_acceleration
+Beta	glob_var.f90	/^	real*8  :: Beta	/;"	v	module:global_variables
+Compute_Force	compt_acc.f90	/^subroutine Compute_Force$/;"	s	module:compute_acceleration
+DeltaStep	glob_var.f90	/^	integer :: DeltaStep	/;"	v	module:global_variables
+EF	compt_acc.f90	/^	real*8,  private :: EF	/;"	v	module:compute_acceleration
+IFrc	compt_acc.f90	/^subroutine IFrc(/;"	s	module:compute_acceleration
+Initialize_ewald_parameters	compt_acc.f90	/^subroutine Initialize_ewald_parameters$/;"	s	module:compute_acceleration
+Initialize_position	init_update.f90	/^subroutine Initialize_position$/;"	s	module:initialize_update
+K_total	compt_acc.f90	/^	integer, private :: K_total /;"	v	module:compute_acceleration
+Kmax1	compt_acc.f90	/^	integer, private :: Kmax1	/;"	v	module:compute_acceleration
+Kmax2	compt_acc.f90	/^	integer, private :: Kmax2	/;"	v	module:compute_acceleration
+Kmax3	compt_acc.f90	/^	integer, private :: Kmax3	/;"	v	module:compute_acceleration
+Lx	glob_var.f90	/^	real*8  :: Lx	/;"	v	module:global_variables
+Ly	glob_var.f90	/^	real*8  :: Ly /;"	v	module:global_variables
+Lz	glob_var.f90	/^	real*8  :: Lz	/;"	v	module:global_variables
+MapCharges	compt_acc.f90	/^subroutine MapCharges(/;"	s	module:compute_acceleration
+NN	glob_var.f90	/^	integer :: NN	/;"	v	module:global_variables
+N_anchor	glob_var.f90	/^	integer :: N_anchor /;"	v	module:global_variables
+N_bond	compt_acc.f90	/^	integer, private :: N_bond	/;"	v	module:compute_acceleration
+Nga	glob_var.f90	/^	integer :: Nga	/;"	v	module:global_variables
+Ngl	glob_var.f90	/^	integer :: Ngl	/;"	v	module:global_variables
+Nma	glob_var.f90	/^	integer :: Nma	/;"	v	module:global_variables
+Nml	glob_var.f90	/^	integer :: Nml	/;"	v	module:global_variables
+Npe	glob_var.f90	/^	integer :: Npe	/;"	v	module:global_variables
+Nq	glob_var.f90	/^	integer :: Nq	/;"	v	module:global_variables
+Nta	glob_var.f90	/^	integer :: Nta	/;"	v	module:global_variables
+Ntl	glob_var.f90	/^	integer :: Ntl	/;"	v	module:global_variables
+PME_BC	glob_var.f90	/^subroutine PME_BC$/;"	s	module:global_variables
+Q_PME	compt_acc.f90	/^	complex (kind=8), allocatable, dimension(:,:,:), private :: Q_PME$/;"	v	module:compute_acceleration
+R0_2	compt_acc.f90	/^	real*8,  private :: R0_2	/;"	v	module:compute_acceleration
+R_bond	compt_acc.f90	/^	real*8,  private :: R_bond	/;"	v	module:compute_acceleration
+Re_l	in_output.f90	/^	real*8 :: Re_l$/;"	v	module:input_output
+Re_lz	in_output.f90	/^	real*8 :: Re_lz$/;"	v	module:input_output
+Re_s	in_output.f90	/^	real*8 :: Re_s$/;"	v	module:input_output
+Re_sb	in_output.f90	/^	real*8 :: Re_sb$/;"	v	module:input_output
+Re_sbz	in_output.f90	/^	real*8 :: Re_sbz$/;"	v	module:input_output
+Re_ss	in_output.f90	/^	real*8 :: Re_ss$/;"	v	module:input_output
+Re_ssz	in_output.f90	/^	real*8 :: Re_ssz$/;"	v	module:input_output
+Re_sz	in_output.f90	/^	real*8 :: Re_sz$/;"	v	module:input_output
+Rg_l	in_output.f90	/^	real*8 :: Rg_l$/;"	v	module:input_output
+Rg_lz	in_output.f90	/^	real*8 :: Rg_lz$/;"	v	module:input_output
+Rg_s	in_output.f90	/^	real*8 :: Rg_s$/;"	v	module:input_output
+Rg_sb	in_output.f90	/^	real*8 :: Rg_sb$/;"	v	module:input_output
+Rg_sbz	in_output.f90	/^	real*8 :: Rg_sbz$/;"	v	module:input_output
+Rg_ss	in_output.f90	/^	real*8 :: Rg_ss$/;"	v	module:input_output
+Rg_ssz	in_output.f90	/^	real*8 :: Rg_ssz$/;"	v	module:input_output
+Rg_sz	in_output.f90	/^	real*8 :: Rg_sz$/;"	v	module:input_output
+SPME_Ewald	compt_acc.f90	/^subroutine SPME_Ewald$/;"	s	module:compute_acceleration
+SizeHist	glob_var.f90	/^	integer :: SizeHist=/;"	v	module:global_variables
+Standard_Ewald	compt_acc.f90	/^subroutine Standard_Ewald$/;"	s	module:compute_acceleration
+StepNum	glob_var.f90	/^	integer :: StepNum	/;"	v	module:global_variables
+StepNum0	glob_var.f90	/^	integer :: StepNum0	/;"	v	module:global_variables
+U_PME	compt_acc.f90	/^	complex (kind=8), allocatable, dimension(:,:,:), private :: U_PME$/;"	v	module:compute_acceleration
+Z_empty	glob_var.f90	/^	real*8  :: Z_empty /;"	v	module:global_variables
+ZeroForce	compt_acc.f90	/^subroutine ZeroForce(/;"	s	module:compute_acceleration
+acc	glob_var.f90	/^	real*8, allocatable, dimension(:,:) :: acc	/;"	v	module:global_variables
+acc_c	compt_acc.f90	/^	real*8,  allocatable, dimension(:,:), private :: acc_c$/;"	v	module:compute_acceleration
+alpha	compt_acc.f90	/^	real*8,  private :: alpha	/;"	v	module:compute_acceleration
+alpha2	compt_acc.f90	/^	real*8,  private :: alpha2	/;"	v	module:compute_acceleration
+anchor_list	compt_acc.f90	/^	integer, allocatable, dimension( : ), private :: anchor_list$/;"	v	module:compute_acceleration
+arm	glob_var.f90	/^	integer :: arm	/;"	v	module:global_variables
+bspln	glob_var.f90	/^recursive real*8 Function bspln(/;"	f	module:global_variables
+bspln_coeffs	glob_var.f90	/^subroutine bspln_coeffs$/;"	s	module:global_variables
+bspln_cof	compt_acc.f90	/^	real*8,  allocatable, dimension(:,:,:), private :: bspln_cof$/;"	v	module:compute_acceleration
+build_fene_list	compt_acc.f90	/^subroutine build_fene_list$/;"	s	module:compute_acceleration
+charge	compt_acc.f90	/^	integer, allocatable, dimension( : ), private :: charge$/;"	v	module:compute_acceleration
+charge_function	glob_var.f90	/^subroutine charge_function$/;"	s	module:global_variables
+compute_acceleration	compt_acc.f90	/^module compute_acceleration$/;"	m
+continue_read_data	subroutines.f90	/^subroutine continue_read_data(/;"	s	module:subroutines
+data_allocate	in_output.f90	/^subroutine data_allocate$/;"	s	module:input_output
+data_operation	in_output.f90	/^subroutine data_operation$/;"	s	module:input_output
+delta_angle1	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: delta_angle1$/;"	v	module:input_output
+delta_angle2	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: delta_angle2$/;"	v	module:input_output
+delta_angle3	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: delta_angle3$/;"	v	module:input_output
+dr_max1	compt_acc.f90	/^ 	real*8,  private :: dr_max1 /;"	v	module:compute_acceleration
+dr_max2	compt_acc.f90	/^ 	real*8,  private :: dr_max2 /;"	v	module:compute_acceleration
+dspln_cof	compt_acc.f90	/^	real*8,  allocatable, dimension(:,:,:), private :: dspln_cof$/;"	v	module:compute_acceleration
+dstep	glob_var.f90	/^	integer :: dstep	/;"	v	module:global_variables
+dt	glob_var.f90	/^	real*8  :: dt	/;"	v	module:global_variables
+epsilon	compt_acc.f90	/^	real*8,  private :: epsilon /;"	v	module:compute_acceleration
+error_analysis	compt_acc.f90	/^subroutine error_analysis$/;"	s	module:compute_acceleration
+exp_ksqr	compt_acc.f90	/^	real*8,  allocatable, dimension( : ), private :: exp_ksqr	/;"	v	module:compute_acceleration
+factorial	glob_var.f90	/^Function factorial(/;"	f	module:global_variables
+fene_force	compt_acc.f90	/^subroutine fene_force$/;"	s	module:compute_acceleration
+fene_list	compt_acc.f90	/^	integer, allocatable, dimension(:,:), private :: fene_list$/;"	v	module:compute_acceleration
+fftw_allow_large_generic	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_allow_large_generic /;"	v
+fftw_backward	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_backward /;"	v
+fftw_believe_pcost	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_believe_pcost /;"	v
+fftw_conserve_memory	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_conserve_memory /;"	v
+fftw_destroy_input	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_destroy_input /;"	v
+fftw_dft_r2hc_icky	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_dft_r2hc_icky /;"	v
+fftw_dht	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_dht /;"	v
+fftw_estimate	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_estimate /;"	v
+fftw_estimate_patient	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_estimate_patient /;"	v
+fftw_exhaustive	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_exhaustive /;"	v
+fftw_forward	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_forward /;"	v
+fftw_hc2r	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_hc2r /;"	v
+fftw_measure	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_measure /;"	v
+fftw_no_buffering	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_no_buffering /;"	v
+fftw_no_indirect_op	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_no_indirect_op /;"	v
+fftw_no_rank_splits	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_no_rank_splits /;"	v
+fftw_no_simd	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_no_simd /;"	v
+fftw_no_vrank_splits	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_no_vrank_splits /;"	v
+fftw_no_vrecurse	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_no_vrecurse /;"	v
+fftw_nonthreaded_icky	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_nonthreaded_icky /;"	v
+fftw_patient	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_patient /;"	v
+fftw_preserve_input	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_preserve_input /;"	v
+fftw_r2hc	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_r2hc /;"	v
+fftw_redft00	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_redft00 /;"	v
+fftw_redft01	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_redft01 /;"	v
+fftw_redft10	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_redft10 /;"	v
+fftw_redft11	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_redft11 /;"	v
+fftw_rodft00	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_rodft00 /;"	v
+fftw_rodft01	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_rodft01 /;"	v
+fftw_rodft10	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_rodft10 /;"	v
+fftw_rodft11	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_rodft11 /;"	v
+fftw_unaligned	fftw3.f90	/^  integer ( kind = 4 ), parameter :: fftw_unaligned /;"	v
+finished	glob_var.f90	/^	real*8  :: finished	/;"	v	module:global_variables
+force_l	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: force_l$/;"	v	module:input_output
+force_l1	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: force_l1$/;"	v	module:input_output
+force_sn	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: force_sn$/;"	v	module:input_output
+force_sn1	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: force_sn1$/;"	v	module:input_output
+force_so	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: force_so$/;"	v	module:input_output
+force_so1	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: force_so1$/;"	v	module:input_output
+force_sy	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: force_sy$/;"	v	module:input_output
+force_sy1	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: force_sy1$/;"	v	module:input_output
+fourier_function	glob_var.f90	/^subroutine fourier_function$/;"	s	module:global_variables
+gamma	glob_var.f90	/^	real*8, parameter:: gamma=/;"	v	module:global_variables
+gauss_dist	subroutines.f90	/^subroutine gauss_dist(/;"	s	module:subroutines
+gdim	compt_acc.f90	/^	real*8,  dimension(3) :: gdim	/;"	v	module:compute_acceleration
+global_variables	glob_var.f90	/^module global_variables$/;"	m
+h_avg	in_output.f90	/^	real*8 :: h_avg$/;"	v	module:input_output
+height	subroutines.f90	/^subroutine height$/;"	s	module:subroutines
+histogram	subroutines.f90	/^subroutine histogram$/;"	s	module:subroutines
+hl_avg	in_output.f90	/^	real*8 :: hl_avg$/;"	v	module:input_output
+hl_end	in_output.f90	/^	real*8 :: hl_end$/;"	v	module:input_output
+hl_max	in_output.f90	/^	real*8 :: hl_max$/;"	v	module:input_output
+hs_avg	in_output.f90	/^	real*8 :: hs_avg$/;"	v	module:input_output
+hs_branch	in_output.f90	/^	real*8 :: hs_branch$/;"	v	module:input_output
+hs_end	in_output.f90	/^	real*8 :: hs_end$/;"	v	module:input_output
+hs_max	in_output.f90	/^	real*8 :: hs_max$/;"	v	module:input_output
+i	main.f90	/^	in/;"	v	program:main
+i0	main.f90	/^	integer :: i0,/;"	v	program:main
+initialize_force_parameters	compt_acc.f90	/^subroutine initialize_force_parameters$/;"	s	module:compute_acceleration
+initialize_lj_parameters	compt_acc.f90	/^subroutine initialize_lj_parameters$/;"	s	module:compute_acceleration
+initialize_parameters	in_output.f90	/^subroutine initialize_parameters$/;"	s	module:input_output
+initialize_update	init_update.f90	/^module initialize_update$/;"	m
+initialize_velocity	init_update.f90	/^subroutine initialize_velocity$/;"	s	module:initialize_update
+input_output	in_output.f90	/^module input_output$/;"	m
+j	main.f90	/^	integer :: i0, i, j,/;"	v	program:main
+k	main.f90	/^	integer :: i0, i, j, k	/;"	v	program:main
+kFENE	compt_acc.f90	/^	real*8,  private :: kFENE	/;"	v	module:compute_acceleration
+kenetic_energy	in_output.f90	/^	real*8 :: kenetic_energy$/;"	v	module:input_output
+lb	compt_acc.f90	/^	real*8,  private :: lb	/;"	v	module:compute_acceleration
+lj_force	compt_acc.f90	/^subroutine lj_force$/;"	s	module:compute_acceleration
+lj_pair_list	compt_acc.f90	/^	integer, allocatable, dimension(:,:), private :: lj_pair_list$/;"	v	module:compute_acceleration
+lj_verlet_list	compt_acc.f90	/^subroutine lj_verlet_list$/;"	s	module:compute_acceleration
+main	main.f90	/^program main$/;"	p
+man	glob_var.f90	/^	integer :: man	/;"	v	module:global_variables
+multistep	glob_var.f90	/^	integer :: multistep	/;"	v	module:global_variables
+new_position	init_update.f90	/^subroutine new_position$/;"	s	module:initialize_update
+ng	compt_acc.f90	/^	integer, dimension(3) :: ng	/;"	v	module:compute_acceleration
+npair1	compt_acc.f90	/^  integer, private :: npair1 /;"	v	module:compute_acceleration
+npair2	compt_acc.f90	/^  integer, private :: npair2 /;"	v	module:compute_acceleration
+ordr	compt_acc.f90	/^	integer, dimension(3) :: ordr	/;"	v	module:compute_acceleration
+period_condition	subroutines.f90	/^subroutine period_condition$/;"	s	module:subroutines
+phi_a	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: phi_a$/;"	v	module:input_output
+phi_axy	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_axy$/;"	v	module:input_output
+phi_ayz	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_ayz$/;"	v	module:input_output
+phi_azx	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_azx$/;"	v	module:input_output
+phi_i	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: phi_i$/;"	v	module:input_output
+phi_ixy	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_ixy$/;"	v	module:input_output
+phi_iyz	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_iyz$/;"	v	module:input_output
+phi_izx	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_izx$/;"	v	module:input_output
+phi_l	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: phi_l$/;"	v	module:input_output
+phi_le	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: phi_le$/;"	v	module:input_output
+phi_lexy	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_lexy$/;"	v	module:input_output
+phi_leyz	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_leyz$/;"	v	module:input_output
+phi_lezx	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_lezx$/;"	v	module:input_output
+phi_lxy	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_lxy$/;"	v	module:input_output
+phi_lyz	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_lyz$/;"	v	module:input_output
+phi_lzx	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_lzx$/;"	v	module:input_output
+phi_q	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: phi_q$/;"	v	module:input_output
+phi_qxy	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_qxy$/;"	v	module:input_output
+phi_qyz	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_qyz$/;"	v	module:input_output
+phi_qzx	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_qzx$/;"	v	module:input_output
+phi_s	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: phi_s$/;"	v	module:input_output
+phi_sb	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: phi_sb$/;"	v	module:input_output
+phi_sbxy	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_sbxy$/;"	v	module:input_output
+phi_sbyz	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_sbyz$/;"	v	module:input_output
+phi_sbzx	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_sbzx$/;"	v	module:input_output
+phi_se	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: phi_se$/;"	v	module:input_output
+phi_sexy	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_sexy$/;"	v	module:input_output
+phi_seyz	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_seyz$/;"	v	module:input_output
+phi_sezx	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_sezx$/;"	v	module:input_output
+phi_sxy	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_sxy$/;"	v	module:input_output
+phi_syz	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_syz$/;"	v	module:input_output
+phi_szx	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_szx$/;"	v	module:input_output
+phi_tot	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: phi_tot$/;"	v	module:input_output
+phi_xy	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_xy$/;"	v	module:input_output
+phi_yz	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_yz$/;"	v	module:input_output
+phi_zx	in_output.f90	/^	integer, allocatable, dimension(:,:) :: phi_zx$/;"	v	module:input_output
+pi	glob_var.f90	/^	real*8, parameter:: pi=/;"	v	module:global_variables
+pmeOrthoConvBC	compt_acc.f90	/^subroutine pmeOrthoConvBC$/;"	s	module:compute_acceleration
+pmeOrthoTabBC	glob_var.f90	/^subroutine pmeOrthoTabBC(/;"	s	module:global_variables
+pos	glob_var.f90	/^	real*8, allocatable, dimension(:,:) :: pos	/;"	v	module:global_variables
+posq	compt_acc.f90	/^	real*8,  allocatable, dimension(:,:), private :: posq	/;"	v	module:compute_acceleration
+qq	glob_var.f90	/^	real*8  :: qq	/;"	v	module:global_variables
+ratio_collapse	in_output.f90	/^	real*8 :: ratio_collapse$/;"	v	module:input_output
+ratio_other	in_output.f90	/^	real*8 :: ratio_other$/;"	v	module:input_output
+ratio_stretch	in_output.f90	/^	real*8 :: ratio_stretch$/;"	v	module:input_output
+ratio_xy	glob_var.f90	/^	real*8  :: ratio_xy /;"	v	module:global_variables
+rcc	compt_acc.f90	/^	real*8,  private :: rcc	/;"	v	module:compute_acceleration
+rcc2	compt_acc.f90	/^	real*8,  private :: rcc2	/;"	v	module:compute_acceleration
+rcl	compt_acc.f90	/^	real*8,  private :: rcl	/;"	v	module:compute_acceleration
+read_data	in_output.f90	/^subroutine read_data	/;"	s	module:input_output
+read_force_parameters	compt_acc.f90	/^subroutine read_force_parameters$/;"	s	module:compute_acceleration
+real_fun	compt_acc.f90	/^	real*8,  allocatable, dimension( : ), private :: real_fun	/;"	v	module:compute_acceleration
+real_function	glob_var.f90	/^subroutine real_function$/;"	s	module:global_variables
+real_itv	compt_acc.f90	/^  real*8,  private :: real_itv /;"	v	module:compute_acceleration
+real_pair_list	compt_acc.f90	/^	integer, allocatable, dimension(:,:), private :: real_pair_list$/;"	v	module:compute_acceleration
+real_space	compt_acc.f90	/^subroutine real_space$/;"	s	module:compute_acceleration
+real_verlet	compt_acc.f90	/^	integer, private :: real_verlet /;"	v	module:compute_acceleration
+real_verlet_list	subroutines.f90	/^subroutine real_verlet_list$/;"	s	module:subroutines
+rescale_velocity	init_update.f90	/^subroutine rescale_velocity$/;"	s	module:initialize_update
+restart_or_continue	glob_var.f90	/^	integer :: restart_or_continue /;"	v	module:global_variables
+rij_and_rr	subroutines.f90	/^subroutine rij_and_rr(/;"	s	module:subroutines
+rsk	compt_acc.f90	/^	real*8,  private :: rsk	/;"	v	module:compute_acceleration
+rvc	compt_acc.f90	/^	real*8,  private :: rvc	/;"	v	module:compute_acceleration
+rvl	compt_acc.f90	/^	real*8,  private :: rvl	/;"	v	module:compute_acceleration
+sigma	compt_acc.f90	/^  real*8,  private :: sigma /;"	v	module:compute_acceleration
+sigmag	glob_var.f90	/^	real*8  :: sigmag	/;"	v	module:global_variables
+splcof	compt_acc.f90	/^subroutine splcof(/;"	s	module:compute_acceleration
+started	glob_var.f90	/^	real*8  :: started	/;"	v	module:global_variables
+step	glob_var.f90	/^	integer :: step	/;"	v	module:global_variables
+subroutines	subroutines.f90	/^module subroutines$/;"	m
+tau_rf	compt_acc.f90	/^	real*8,  private :: tau_rf	/;"	v	module:compute_acceleration
+theta_bez	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: theta_bez$/;"	v	module:input_output
+theta_l	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: theta_l$/;"	v	module:input_output
+theta_lz	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: theta_lz$/;"	v	module:input_output
+theta_sbl	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: theta_sbl$/;"	v	module:input_output
+theta_sblz	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: theta_sblz$/;"	v	module:input_output
+theta_ssl	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: theta_ssl$/;"	v	module:input_output
+theta_sslz	in_output.f90	/^	real*8,  allocatable, dimension(:,:) :: theta_sslz$/;"	v	module:input_output
+tol	compt_acc.f90	/^	real*8,  private :: tol	/;"	v	module:compute_acceleration
+total_time	glob_var.f90	/^	real*8  :: total_time=/;"	v	module:global_variables
+vel	glob_var.f90	/^	real*8, allocatable, dimension(:,:) :: vel	/;"	v	module:global_variables
+write_acc	subroutines.f90	/^subroutine write_acc$/;"	s	module:subroutines
+write_height	subroutines.f90	/^subroutine write_height(/;"	s	module:subroutines
+write_hist	subroutines.f90	/^subroutine write_hist$/;"	s	module:subroutines
+write_lj_list	subroutines.f90	/^subroutine write_lj_list$/;"	s	module:subroutines
+write_pos	subroutines.f90	/^subroutine write_pos$/;"	s	module:subroutines
+write_pos1	subroutines.f90	/^subroutine write_pos1$/;"	s	module:subroutines
+write_real_list	subroutines.f90	/^subroutine write_real_list$/;"	s	module:subroutines
+write_time	subroutines.f90	/^subroutine write_time(/;"	s	module:subroutines
+write_vel	subroutines.f90	/^subroutine write_vel$/;"	s	module:subroutines
+write_vel1	subroutines.f90	/^subroutine write_vel1(/;"	s	module:subroutines
+xi	compt_acc.f90	/^	real*8,  private :: xi	/;"	v	module:compute_acceleration

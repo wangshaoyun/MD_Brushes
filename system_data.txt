@@ -1,17 +1,17 @@
+1               !0:uniform, 1:random
 200							! Lz
-0.005 					! sigmag
+2               ! Z_empty
+5D-3 					  ! sigmag
+0.8333D0        ! Beta:     1/kT, T=298K
 -1						  ! qq:				charge of PE 
 4  							! arm: number of arm in star brushes 			
 51							! Nma: number of monomers of each arm
 33							! Nga: grafting number of star brushes
-52							! Nml: number of monomers of each linear chain, Nml-1 must be the multiple of man
+52							! Nml: Monomers of each linear chain, mod(Nml-1,man)==0 
 33							! Ngl: grafting number of linear chains
 3 							!	man: Manning effect : every 'man' particle have one charge	
-1.9							! tol
-750						  ! tau_rf
--0.9	 			  	! EF
 1500						! StepNum0
 10000						! StepNum: 	steps of running
 2000 				  	! DeltaStep: steps of every calculation of physical quantities
-10							! longstep
-0.005 					! dt: 			distance of each move
+10							! multistep
+0.005D0 				! dt: 			distance of each move
