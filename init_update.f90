@@ -1,11 +1,7 @@
-module update_position
-use data_module
-use compute_acc
-use subroutines
+module initialize_update
 implicit none
 contains
 
-!############Initialize_position############!	
 subroutine Initialize_position
 	!-----------------------------------------!
 	!input: pos
@@ -318,10 +314,8 @@ subroutine Initialize_position
 		pos(charge(i),4)=qq									!end charged
 	end do
 end subroutine Initialize_Position
-!###########################################!	
 
 
-!############Initialize_velocity############!	
 subroutine initialize_velocity
 !-----------------------------------------!
 !input: pos
@@ -345,10 +339,8 @@ do i=1,N_anchor
 end do
 call rescale_velocity
 end subroutine initialize_velocity
-!###########################################!	
 
 
-!##############rescale_velocity#############!	
 subroutine rescale_velocity
 	!-----------------------------------------!
 	!
@@ -381,10 +373,8 @@ subroutine rescale_velocity
   ! rescale_velocity
 	vel=vel*sqrt(3./Beta/v2_sum)
 end subroutine rescale_velocity
-!###########################################!	
 
 
-!################new_position###############!	
 subroutine new_position
 	!-----------------------------------------!
 	!
@@ -417,7 +407,6 @@ subroutine new_position
   call compute_force
 	vel=(vel+acc*dt/2.)/(1+xi*dt/2.)
 end subroutine new_position
-!###########################################!		
 
 
 end module update_position

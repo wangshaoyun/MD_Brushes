@@ -1,8 +1,60 @@
-module compute_acc
-	use data_module
-	use subroutines
+module compute_acceleration
 	implicit none
-contains
+
+	save
+
+!###################potential#####################!
+	real*8 :: rcl					!cut-off length of lj potential
+	real*8 :: rvl					!cut-off length of verlet list of lj potnetial
+	real*8 :: rcc					!cut-off length of coulomb force in real space
+	real*8 :: rcc2				!rcc2=rcc*rcc
+	real*8 :: rvc					!rvc=rcc+rsk
+	real*8 :: rsk					!skin thickness of of the cut-off sphere in real space
+	real*8 :: tol					!tolerance
+	real*8 :: tau_rf			!ratio of time in real space and fourier space
+	integer :: Kmax1			!max wave number of x direction in fourier space 
+	integer :: Kmax2			!max wave number of y direction in fourier space 
+	integer :: Kmax3			!max wave number of z direction in fourier space 
+	integer :: K_total
+	integer :: real_verlet!call real verlet list or not
+	real*8 :: dr_max1     !max displacement of lj verlet list
+	real*8 :: dr_max2			!max displacemnet of real verlet list
+	real*8 :: R0_2				!max length of FENE potential
+	real*8 :: kFENE				!coefficient of FENE potential
+	real*8 :: lb					!Bjerrum length
+	real*8 :: xi					!friction coefficient
+	real*8 :: EF					!electric field
+	real*8 :: alpha				!screening parameter of Gauss screening function 
+	real*8 :: alpha2			!alpha2=alpha*alpha
+	real*8 :: real_itv
+	real*8  :: R_bond	  !length of chemical band
+	integer :: N_bond		!
+
+	integer, dimension(3) :: ordr				!Order of spline function
+	integer, dimension(3) :: ng					!wave number
+	real*8,  dimension(3) :: gdim				!length, width and height of the box
+!###################potential#####################!
+
+	integer :: npair1				!number of pairs in the sphere of radius of rvl
+	integer :: npair2				!number of pairs in the sphere of radius of rvc
+
+	real*8, allocatable, dimension(:,:) :: posq					!array of position
+	real*8, allocatable, dimension(:,:) :: acc_c				!array of accelaration
+
+	integer, allocatable, dimension(:,:):: lj_pair_list	!LJ potential verlet list
+	integer, allocatable, dimension(:,:):: real_pair_list!verlet list of coulomb force in real space
+	integer, allocatable, dimension(:) :: charge				!charge number to monomer number
+	integer, allocatable, dimension(:,:) :: fene_list		!pairs of two adjacent monomers
+	integer, allocatable, dimension(:) :: anchor_list		!number of the anchored monomer
+	real*8, allocatable, dimension(:) :: exp_ksqr	
+	real*8, allocatable, dimension(:) :: real_fun			
+	real*8, allocatable, dimension(:,:,:) :: bspln_cof
+	real*8, allocatable, dimension(:,:,:) :: dspln_cof
+	complex (kind=8), allocatable, dimension(:,:,:) :: Q_PME
+	complex (kind=8), allocatable, dimension(:,:,:) :: U_PME
+	complex (kind=8), allocatable, dimension(:,:,:) :: BC_PME
+
+	contains
 
 	!###############error_analysis##############!
 	subroutine error_analysis

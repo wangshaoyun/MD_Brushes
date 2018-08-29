@@ -10,10 +10,14 @@ implicit none
 	!################begin#################!
 	call cpu_time(started)
 	call random_seed()
+	!
+  !input and initialize system, timing and histogram parameters.
+  call initialize_parameters
 	call read_data             								 !Read data from data.txt
 	call data_operation												 !some data are processed from data read
 	call data_allocate												 !allocate the arrays such as pos
-	
+	!
+	!
 	if (restart_or_continue == 0) then
 		i=1
 		call charge_function
