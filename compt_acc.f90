@@ -6,20 +6,20 @@ module compute_acceleration
 	!lj potential
 	real*8,  private :: epsilon     !Energy unit epsilon in lj potential
   real*8,  private :: sigma       !Distance sigma in lj potential
-	real*8,  private :: rcl					!Cut off radius of LJ potential
-	real*8,  private :: rvl			    !Verlet list radius of LJ potential
+	real*8 :: rcl					!Cut off radius of LJ potential
+	real*8 :: rvl			    !Verlet list radius of LJ potential
   integer, private :: npair1      !number of pairs in the lj verlet sphere
- 	real*8,  private :: dr_max1     !max displacement of lj verlet list
+ 	real*8 :: dr_max1     !max displacement of lj verlet list
   !
 	!fene potential
-	real*8,  private :: R0_2			  !max length of FENE potential
-	real*8,  private :: kFENE			  !coefficient of FENE potential
-	integer, private :: N_bond		  !Number of Chemical bond of polymers
-	real*8,  private :: R_bond	    !length of chemical band
+	real*8 :: R0_2			  !max length of FENE potential
+	real*8 :: kFENE			  !coefficient of FENE potential
+	integer :: N_bond		  !Number of Chemical bond of polymers
+	real*8 :: R_bond	    !length of chemical band
 	!
 	!coulomb potential
-	real*8,  private :: lb					!Bjerrum length
-	real*8,  private :: xi				  !friction coefficient
+	real*8 :: lb					!Bjerrum length
+	real*8 :: xi				  !friction coefficient
 	real*8,  private :: EF					!electric field
 	real*8,  private :: tol				  !tolerance
 	real*8,  private :: tau_rf			!ratio of time between real and fourier space
@@ -30,12 +30,12 @@ module compute_acceleration
 	real*8,  private :: rcc					!Cut off radius of real space
 	real*8,  private :: rcc2				!rcc2=rcc*rcc
 	real*8,  private :: rvc					!rvc=rcc+rsk
-	real*8,  private :: rsk					!Skin between cut off sphere and verlet list 
+	real*8 :: rsk					!Skin between cut off sphere and verlet list 
                                   !sphere in real space
-	integer, private :: real_verlet !call real verlet list or not
+	integer :: real_verlet !call real verlet list or not
   real*8,  private :: real_itv    !Inteval of interpolation of Error Function
   integer, private :: npair2      !number of pairs in the real verlet sphere
- 	real*8,  private :: dr_max2     !max displacement of lj verlet list
+ 	real*8 :: dr_max2     !max displacement of lj verlet list
 	!
 	!reciprocal space
 	integer, private :: Kmax1			 	!max wave number of x direction
@@ -55,11 +55,11 @@ module compute_acceleration
 												!LJ potential verlet list
 	integer, allocatable, dimension(:,:), private :: real_pair_list
 												!real space verlet list
-	integer, allocatable, dimension( : ), private :: charge
+	integer, allocatable, dimension( : ) :: charge
 												!charge number to monomer number
 	integer, allocatable, dimension(:,:), private :: fene_list
 												!pairs of two adjacent monomers
-	integer, allocatable, dimension( : ), private :: anchor_list
+	integer, allocatable, dimension( : ) :: anchor_list
 												!number of the anchored monomer
 	real*8,  allocatable, dimension( : ), private :: exp_ksqr	
 												!coefficients in Fourier space
@@ -80,7 +80,6 @@ module compute_acceleration
 
 
 subroutine initialize_force_parameters
-	implicit none
 	use global_variables
 	implicit none
   !
@@ -94,7 +93,7 @@ subroutine initialize_force_parameters
   call lj_verlet_list
   !
   !Initialize fene parameters and array allocate.
-  call fene_list
+  call build_fene_list
   !
   !
   if ( qq /= 0 ) then
@@ -127,6 +126,7 @@ end subroutine initialize_force_parameters
 
 
 subroutine read_force_parameters
+
 	open(10,file='./force_data.txt')
 		read(10,*) epsilon
 		read(10,*) sigma	
@@ -159,11 +159,11 @@ subroutine initialize_lj_parameters
   !
   !allocate verlet list of LJ potential
   rho = NN / (Lx * Ly * Lz)
-  v_verlet = 8.D0/3 * pi * rv_lj**3
+  v_verlet = 8.D0/3 * pi * rvl**3
   allocate(  lj_pair_list(25*NN*ceiling(rho*v_verlet),2)  )
   lj_pair_list = 0
 	dr_max1 = 0
-	npari1  = 0
+	npair1  = 0
 end subroutine initialize_lj_parameters
 
 
@@ -311,12 +311,12 @@ subroutine Initialize_ewald_parameters
 
   alpha    = ( tau_rf * pi**3 * Nq / (Lx*Ly*Lz)**2 ) ** (1.D0/6)
   alpha2   = alpha * alpha
-  rc_real  = tol / alpha
-  rc_real2 = rc_real * rc_real
-  rv_real  = rc_real + rsk_real
+  rcc  = tol / alpha
+  rcc2 = rcc * rcc
+  rvc  = rcc + rsk
   !
   !use verlet list in real space
-  if ( ( int(Lx/rv_real) * int(Ly/rv_real) * int(Lz/rv_real) ) > 27 ) then 
+  if ( ( int(Lx/rvc) * int(Ly/rvc) * int(Lz/rvc) ) > 27 ) then 
     Kmax1 = ceiling(tol*Lx*alpha/pi)
     Kmax2 = ceiling(tol*Ly*alpha/pi)
     Kmax3 = ceiling(tol*Lz*Z_empty*alpha/pi)
@@ -325,17 +325,17 @@ subroutine Initialize_ewald_parameters
   !don't use verlet list in real space
   else
     if ( Lx > Ly ) then
-      rc_real = Ly/2
+      rcc = Ly/2
     else
-      rc_real = Lx/2
+      rcc = Lx/2
     end if
-    rc_real2 = rc_real * rc_real
-    Kmax1    = ceiling(tol*tol/pi*Lx/rc_real)
-    Kmax2    = ceiling(tol*tol/pi*Ly/rc_real)
-    Kmax3    = ceiling(tol*tol/pi*Lz*Z_empty/rc_real)
-    alpha    = tol / rc_real
+    rcc2 = rcc * rcc
+    Kmax1    = ceiling(tol*tol/pi*Lx/rcc)
+    Kmax2    = ceiling(tol*tol/pi*Ly/rcc)
+    Kmax3    = ceiling(tol*tol/pi*Lz*Z_empty/rcc)
+    alpha    = tol / rcc
     alpha2   = alpha * alpha
-    rv_real  = rc_real + rsk_real
+    rvc  = rcc + rsk
     real_verlet = 0
   end if
   Kmax1 = ceiling(Kmax1*3.0)
@@ -346,7 +346,7 @@ subroutine Initialize_ewald_parameters
   !
   !allocate verlet list of real space
   rho = Nq / (Lx * Ly * Lz)
-  v_verlet = 8.D0/3 * pi * rv_real**3
+  v_verlet = 8.D0/3 * pi * rvc**3
   allocate( real_pair_list(25*Nq*ceiling(rho*v_verlet),2) )
   real_pair_list = 0
   dr_max2 = 0
@@ -488,6 +488,7 @@ subroutine fourier_function
 	!----------------------------------------!
 	!
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer i,j,k,l
 	real*8 ksqr,k1,k2,k3,factor,kcut
@@ -503,7 +504,7 @@ subroutine fourier_function
 		end do
 	end do
 
-	if ( allovated(exp_ksqr) == 1 ) deallocate( exp_ksqr )
+	if ( allocated(exp_ksqr) ) deallocate( exp_ksqr )
 	allocate(exp_ksqr(K_total))
 	l=0
 	do k=0,Kmax3
@@ -532,10 +533,11 @@ subroutine real_function
 	!----------------------------------------!
 	!
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	real*8 :: rr,rsqr,c1,c2,rf
 	integer :: N=100000,i,j
-	if ( allovated(real_fun) == 1 ) deallocate( real_fun )
+	if ( allocated(real_fun) ) deallocate( real_fun )
 	allocate( real_fun(N) )
 	real_fun=0.
 	c1=lb/Beta
@@ -554,6 +556,7 @@ subroutine error_analysis
 	!---------------------------------------!
 	!
 	!---------------------------------------!
+	use global_variables
 	implicit none
 	real*8 f_r, f_k, q_tot, rmsf, tol1, tau_rf1, sumf1, sumf2,st,fn,tm1,tm2
 	integer i,j,m
@@ -634,6 +637,7 @@ subroutine Compute_Force
 	!output: force
 	!including:
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	real*8, dimension(3) :: rij
 	real*8 :: ff,r2,eta1,eta2,eta3,st,fn
@@ -668,6 +672,7 @@ subroutine lj_force
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	integer i,j,k,n
 	real*8, dimension(3) :: rij
@@ -686,42 +691,43 @@ subroutine lj_force
 		rij=pos(i,1:3)-pos(j,1:3)
 		if (rij(1)>hLx) then
 			rij(1)=rij(1)-Lx
-			elseif(rij(1)<=nhLx) then
-				rij(1)=rij(1)+Lx
-			end if
-			if (rij(2)>hLy) then
-				rij(2)=rij(2)-Ly
-				elseif(rij(2)<=nhLy) then
-					rij(2)=rij(2)+Ly
-				end if
-				rsqr=rij(1)*rij(1)+rij(2)*rij(2)+rij(3)*rij(3)
-				if (rsqr<rcl2) then
-					inv_r2=1/rsqr
-					inv_r6=inv_r2*inv_r2*inv_r2
-					acc_lj(i,:)=acc_lj(i,:)+inv_r2*inv_r6*(inv_r6-0.5)*rij
-				end if
-			end do
-			acc_lj=acc_lj*48
+		elseif(rij(1)<=nhLx) then
+			rij(1)=rij(1)+Lx
+		end if
+		if (rij(2)>hLy) then
+			rij(2)=rij(2)-Ly
+		elseif(rij(2)<=nhLy) then
+			rij(2)=rij(2)+Ly
+		end if
+		rsqr=rij(1)*rij(1)+rij(2)*rij(2)+rij(3)*rij(3)
+		if (rsqr<rcl2) then
+			inv_r2=1/rsqr
+			inv_r6=inv_r2*inv_r2*inv_r2
+			acc_lj(i,:)=acc_lj(i,:)+inv_r2*inv_r6*(inv_r6-0.5)*rij
+		end if
+	end do
+	acc_lj=acc_lj*48
 	!wall force
 	do i=1,NN
 		if (abs(pos(i,3))<0.01 .or. abs(pos(i,3)-Lz)<0.01) 	then  !exclude the end monomer on the plate
-			cycle
-			elseif ( pos(i,3)<rcl ) then
-				dl=pos(i,3)
-				acc_lj(i,3)=acc_lj(i,3)+0.4*(3/(dl**11)-1/(dl**5))*dl
-				elseif ( (Lz-pos(i,3))<rcl ) then
-					dl=Lz-pos(i,3)
-					acc_lj(i,3)=acc_lj(i,3)-0.4*(3/(dl**11)-1/(dl**5))*dl
-				end if
-			end do
-			acc=acc+acc_lj
-		end subroutine lj_force
+		cycle
+		elseif ( pos(i,3)<rcl ) then
+			dl=pos(i,3)
+			acc_lj(i,3)=acc_lj(i,3)+0.4*(3/(dl**11)-1/(dl**5))*dl
+		elseif ( (Lz-pos(i,3))<rcl ) then
+			dl=Lz-pos(i,3)
+			acc_lj(i,3)=acc_lj(i,3)-0.4*(3/(dl**11)-1/(dl**5))*dl
+		end if
+	end do
+	acc=acc+acc_lj
+end subroutine lj_force
 
 
 subroutine real_space
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	integer i,j,k,m,n,x
 	real*8 rsqr,Mz,rr,c1,c2,hLx,nhLx,hLy,nhLy
@@ -755,24 +761,24 @@ subroutine real_space
 			rij=pos(i,1:3)-pos(j,1:3)
 			if (rij(1)>hLx) then
 				rij(1)=rij(1)-Lx
-				elseif(rij(1)<=nhLx) then
-					rij(1)=rij(1)+Lx
-				end if
-				if (rij(2)>hLy) then
-					rij(2)=rij(2)-Ly
-					elseif(rij(2)<=nhLy) then
-						rij(2)=rij(2)+Ly
-					end if
-					rsqr=rij(1)*rij(1)+rij(2)*rij(2)+rij(3)*rij(3)
-					if (rsqr<rcc2) then
-! 						x=nint(rsqr/real_itv)
-! 						acc_c(i,:)=acc_c(i,:)+pos(i,4)*pos(j,4)*real_fun(x)*rij
-						rr=sqrt(rsqr)
-						ff=pos(i,4)*pos(j,4)/rsqr*( erfc(alpha*rr)/rr + c2*exp(-alpha2*rsqr) )*rij*c1
-						acc_c(i,:)=acc_c(i,:)+ff
-					end if
-				end do
+			elseif(rij(1)<=nhLx) then
+				rij(1)=rij(1)+Lx
 			end if
+			if (rij(2)>hLy) then
+				rij(2)=rij(2)-Ly
+			elseif(rij(2)<=nhLy) then
+				rij(2)=rij(2)+Ly
+			end if
+			rsqr=rij(1)*rij(1)+rij(2)*rij(2)+rij(3)*rij(3)
+			if (rsqr<rcc2) then
+! 				x=nint(rsqr/real_itv)
+! 				acc_c(i,:)=acc_c(i,:)+pos(i,4)*pos(j,4)*real_fun(x)*rij
+ 				rr=sqrt(rsqr)
+				ff=pos(i,4)*pos(j,4)/rsqr*( erfc(alpha*rr)/rr + c2*exp(-alpha2*rsqr) )*rij*c1
+				acc_c(i,:)=acc_c(i,:)+ff
+			end if
+		end do
+	end if
 	!compute the modified force
 	do m=1,Nq
 		i=charge(m)
@@ -789,6 +795,7 @@ subroutine Standard_Ewald
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	complex eikx(1:Nq, -Kmax1:Kmax1)
 	complex eiky(1:Nq, -Kmax2:Kmax2)
@@ -875,6 +882,7 @@ subroutine SPME_Ewald
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	real*8, dimension(Nq,ordr(1)) :: SPx
 	real*8, dimension(Nq,ordr(1)) :: dSPx
@@ -931,6 +939,8 @@ subroutine fene_force
 	!-----------------------------------------!
 	!Note: rij=ri-rj
 	!-----------------------------------------!
+	use input_output
+	use global_variables
 	implicit none
 	integer :: i,j,k,n
 	real*8 :: rsqr
@@ -960,6 +970,7 @@ subroutine splcof(SP, dSP, qmap, ord, xyz)
 	!ord指定数组大小可以吗，回去查查, 可以的
 	!不能在定义时候初始化
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	integer, intent(in) :: ord
 	real*8, dimension(Nq,ord), intent(out) :: SP
@@ -1032,6 +1043,7 @@ subroutine MapCharges(SPx, SPy, SPz, iqmap, jqmap, kqmap)
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	real*8, dimension(Nq,ordr(1)), intent(in) :: SPx
 	real*8, dimension(Nq,ordr(2)), intent(in) :: SPy
@@ -1057,30 +1069,30 @@ subroutine MapCharges(SPx, SPy, SPz, iqmap, jqmap, kqmap)
 		jh=jmp(1)
 		kh=kmp(1)
 		
-! 		if (ih<ng1o .and. jh<ng2o .and. kh<ng3o) then
-SPxh(:,1)=SPx(h,:)
-SPyh(1,:)=SPy(h,:)
-SPzh=SPz(h,:)
-qmij=matmul(SPxh,SPyh)
-do i=1,ordr(3)
-	qmijk(:,:,i)=SPzh(i)*qmij
-end do
-Q_PME(imp,jmp,kmp)=Q_PME(imp,jmp,kmp)+qmijk
-! 		else
-! 			do i=1,ordr(1)
-! 				ii=iqmap(h,i)
-! 				dqx=SPx(h,i)
-! 				do j=1,ordr(2)
-! 					jj=jqmap(h,j)
-! 					dqxy=dqx*SPy(h,j)
-! 					do k=1,ordr(3)
-! 						kk=kqmap(h,k)
-! 						Q_PME(ii,jj,kk)=Q_PME(ii,jj,kk)+dqxy*SPz(h,k)
-! 					end do
-! 				end do
-! 			end do
-! 		end if
-end do
+	! 		if (ih<ng1o .and. jh<ng2o .and. kh<ng3o) then
+	SPxh(:,1)=SPx(h,:)
+	SPyh(1,:)=SPy(h,:)
+	SPzh=SPz(h,:)
+	qmij=matmul(SPxh,SPyh)
+	do i=1,ordr(3)
+		qmijk(:,:,i)=SPzh(i)*qmij
+	end do
+	Q_PME(imp,jmp,kmp)=Q_PME(imp,jmp,kmp)+qmijk
+	! 		else
+	! 			do i=1,ordr(1)
+	! 				ii=iqmap(h,i)
+	! 				dqx=SPx(h,i)
+	! 				do j=1,ordr(2)
+	! 					jj=jqmap(h,j)
+	! 					dqxy=dqx*SPy(h,j)
+	! 					do k=1,ordr(3)
+	! 						kk=kqmap(h,k)
+	! 						Q_PME(ii,jj,kk)=Q_PME(ii,jj,kk)+dqxy*SPz(h,k)
+	! 					end do
+	! 				end do
+	! 			end do
+	! 		end if
+	end do
 
 end subroutine Mapcharges
 
@@ -1089,6 +1101,7 @@ subroutine pmeOrthoConvBC
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	include "fftw3.f90"
 	complex ( kind = 8 ), dimension(ng(1),ng(2),ng(3)) :: fQ_PME
@@ -1098,13 +1111,13 @@ subroutine pmeOrthoConvBC
 	integer ( kind = 8 ) plan_forward
 	integer ( kind = 8 ) plan
 	
-  call dfftw_plan_dft_3d_ ( plan_forward, ng(1), ng(2), ng(3), Q_PME, fQ_PME, FFTW_FORWARD, FFTW_Estimate ) !MEASURE !Estimate
+  call dfftw_plan_dft_3d_ ( plan_forward, ng(1), ng(2), ng(3), Q_PME, fQ_PME, FFTW_FORWARD, FFTW_Estimate ) 
 
   call dfftw_execute_ ( plan_forward )
   
   call dfftw_destroy_plan_ ( plan_forward )
   
-	fQ_PME(1,1,1)=0				  !fft能变换出无穷的数吗
+	fQ_PME(1,1,1)=0				  
 	
 ! 	do i=1, ng(1)
 ! 	  do j=1,ng(2)
@@ -1133,6 +1146,7 @@ subroutine IFrc(acc_f, Bx, By, Bz, dBx, dBy, dBz, iqm, jqm, kqm)
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	real*8, dimension(Nq,3), intent(out) :: acc_f
 	real*8, dimension(Nq,ordr(1)), intent(in) :: Bx
@@ -1218,6 +1232,7 @@ subroutine ZeroForce(acc_f)
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	real*8, dimension(Nq,3),intent(inout) :: acc_f
 	real*8, dimension(3) :: mean_acc
@@ -1242,11 +1257,12 @@ subroutine bspln_coeffs
 	!----------------------------------------!
 	!2010, Gradimir V. Milovanovic, Applied Mathematics Letters
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer :: h,i,j,k,l,m,g,ii
 	real*8, allocatable, dimension(:,:,:) :: a
-	if ( allocated(bspln_cof) == 1 ) deallocate(bspln_cof)
-	if ( allocated(dspln_cof) == 1 ) deallocate(dspln_cof)
+	if ( allocated(bspln_cof) ) deallocate(bspln_cof)
+	if ( allocated(dspln_cof) ) deallocate(dspln_cof)
 	allocate(bspln_cof(maxval(ordr),maxval(ordr),3))
 	allocate(dspln_cof(maxval(ordr),maxval(ordr),3))
 	bspln_cof=0
@@ -1303,6 +1319,7 @@ subroutine PME_BC
 	!----------------------------------------!
 	!
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	complex (kind=8) :: bx(ng(1)), by(ng(2)), bz(ng(3))
 	real*8 :: mx(ng(1)), my(ng(2)), mz(ng(3))
@@ -1310,9 +1327,9 @@ subroutine PME_BC
 	real*8 dx, dxy, dxyz
 	integer :: i,j,k
 	
-	if ( allocated(BC_PME) == 1 ) deallocate(BC_PME)
-	if ( allocated(Q_PME)  == 1 ) deallocate(Q_PME)
-	if ( allocated(U_PME)  == 1 ) deallocate(U_PME)
+	if ( allocated(BC_PME) ) deallocate(BC_PME)
+	if ( allocated(Q_PME)  ) deallocate(Q_PME)
+	if ( allocated(U_PME)  ) deallocate(U_PME)
 
 	BC_PME = 0
 	Q_PME  = 0
@@ -1341,6 +1358,7 @@ subroutine pmeOrthoTabBC(bv, mv, ev, xyz)
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
 	implicit none
 	integer, intent(in) :: xyz
 	complex (kind=8), dimension(ng(xyz)), intent(out) :: bv
@@ -1458,6 +1476,23 @@ subroutine rij_and_rr(rij, rsqr, i, j)
   rsqr = rij(1)*rij(1) + rij(2)*rij(2) + rij(3)*rij(3)
 
 end subroutine rij_and_rr
+
+subroutine gauss_dist(mu, sigma, rnd)
+	!---------------------------------------!
+	!
+	!---------------------------------------!
+	use global_variables
+	implicit none
+	real*8, intent(out) :: rnd
+	real*8, intent(in) :: mu, sigma
+	real*8 rnd1, rnd2
+	
+	call random_number(rnd1)
+	call random_number(rnd2)
+	rnd=sqrt(-2*log(rnd1))*cos(2*pi*rnd2)
+	rnd=mu+rnd*sigma
+end subroutine gauss_dist
+
 
 end module compute_acceleration
 

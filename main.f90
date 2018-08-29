@@ -1,8 +1,8 @@
 program main
-use data_module
-use update_position
-use compute_acc
-use subroutines
+use global_variables
+use initialize_update
+use compute_acceleration
+use input_output
 implicit none
 
 	!#################data#################!
@@ -78,7 +78,6 @@ implicit none
 			call height
 			call write_height(step)
 			if (mod(step,10)==0) then
-				write(*,*) 'step:', step,'npair1:',npair1,'npair2:',npair2
 				call error_analysis
 				call write_height(step)
 				call write_pos1										 
@@ -107,7 +106,6 @@ implicit none
 		call height
 		call write_height(step)
 		if (mod(step,10)==0) then
-			write(*,*) 'step:', step,'npair1:',npair1,'npair2:',npair2
 			call write_pos1										
 			call write_vel1(step)
 			call write_hist

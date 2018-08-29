@@ -3,8 +3,8 @@
 1.12246D0           !rcl       
 1.81246D0           !rvl       
 1                   !rsk    
-4                   !R0_2  
-7.5D0               !kFENE  
+2.25                   !R0_2  
+30               !kFENE  
 0.97D0              !R_bond
 6                   !ordr(1)
 6                   !ordr(2)

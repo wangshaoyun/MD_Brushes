@@ -1,2 +1,7 @@
 
 compute_acc.f90
+*.o
+*.mod
+main
+force_data.txt
+force_data.txt

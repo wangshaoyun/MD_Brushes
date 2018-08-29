@@ -10,9 +10,10 @@ subroutine Initialize_position
 	!External variants: R_bond, R_box, Lz, Npe, qq
 	!note: the box's radius is (R_rod,R_box) and height is (-Lz/2, Lz/2)
 	!-----------------------------------------!
+	use compute_acceleration, only : charge
 	use global_variables
 	implicit none
-	integer :: l
+	integer :: l, i
 
 	l=0
 	!Graft star and linear brushes
@@ -35,6 +36,7 @@ end subroutine Initialize_Position
 
 
 subroutine random_star_brushes(l)
+	use compute_acceleration, only : R_bond
 	use global_variables
 	implicit none
 	integer :: i, j, k, m, n, x, y, p
@@ -111,6 +113,7 @@ end subroutine random_star_brushes
 
 
 subroutine random_linear_brushes(l)
+	use compute_acceleration, only : R_bond
 	use global_variables
 	implicit none
 	integer :: i, j, k, m, n, x, y, p
@@ -181,6 +184,7 @@ end subroutine random_linear_brushes
 
 
 subroutine uniform_star_brushes(l)
+	use compute_acceleration, only : R_bond
 	use global_variables
 	implicit none
 	integer :: i, j, k, m, n, x, y, p
@@ -254,6 +258,7 @@ end subroutine uniform_star_brushes
 
 
 subroutine uniform_linear_brushes(l)
+	use compute_acceleration, only : R_bond
 	use global_variables
 	implicit none
 	integer :: i, j, k, m, n, x, y, p
@@ -354,27 +359,29 @@ end subroutine initialize_ions
 
 
 subroutine initialize_velocity
-!-----------------------------------------!
-!input: pos
-!output: pos
-!External variants: R_bond, R_box, Lz, Npe, qq
-!note: the box's radius is (R_rod,R_box) and height is (-Lz/2, Lz/2)
-!-----------------------------------------!
-implicit none
-integer i,j,k
-real*8 rnd
+ !-----------------------------------------!
+ !input: pos
+ !output: pos
+ !External variants: R_bond, R_box, Lz, Npe, qq
+ !note: the box's radius is (R_rod,R_box) and height is (-Lz/2, Lz/2)
+ !-----------------------------------------!
+	use compute_acceleration, only : anchor_list
+	use global_variables
+	implicit none
+	integer i,j,k
+	real*8 rnd
 
-! generate gauss velocity distribution
-do i=1, NN
-  do j=1, 3
-    call gauss_dist(0.D0,sqrt(1./Beta),rnd)
-    vel(i,j)=rnd
-  end do
-end do
-do i=1,N_anchor
-	vel(anchor_list(i),:)=0
-end do
-call rescale_velocity
+	! generate gauss velocity distribution
+	do i=1, NN
+	  do j=1, 3
+	    call gauss_dist(0.D0,sqrt(1./Beta),rnd)
+	    vel(i,j)=rnd
+	  end do
+	end do
+	do i=1,N_anchor
+		vel(anchor_list(i),:)=0
+	end do
+	call rescale_velocity
 end subroutine initialize_velocity
 
 
@@ -382,6 +389,8 @@ subroutine rescale_velocity
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use compute_acceleration, only : anchor_list
+	use global_variables
 	implicit none
 	real*8 v2_sum     !sum of velocity square
 	integer i,j
@@ -416,6 +425,8 @@ subroutine new_position
 	!-----------------------------------------!
 	!
 	!-----------------------------------------!
+	use global_variables
+	use compute_acceleration
 	implicit none
 	real*8, dimension(3) :: dri
 	real*8 dr1,dr2,dmax1,dmax2,eta1,eta2,eta3
@@ -451,6 +462,7 @@ subroutine gauss_dist(mu, sigma, rnd)
 	!---------------------------------------!
 	!
 	!---------------------------------------!
+	use global_variables
 	implicit none
 	real*8, intent(out) :: rnd
 	real*8, intent(in) :: mu, sigma
@@ -469,6 +481,7 @@ subroutine period_condition
 	!output: pos
 	!External Variables: Lx, Lz, NN, Nrod
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer k
 	

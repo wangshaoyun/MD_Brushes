@@ -137,6 +137,7 @@ end subroutine read_data
 subroutine data_operation
 	use global_variables
 	implicit none
+	logical alive
 
 	Nta = ( Nma*arm+1 ) * Nga
 	Ntl = Nml * Ngl
@@ -174,6 +175,7 @@ subroutine data_allocate
 	!----------------------------------------!
 	!allocate array and initialize them
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	!
 	!position, velocity, and acceleration
@@ -316,7 +318,6 @@ implicit none
 	write(*,*) 'total brushes particles,         Npe:', Npe
 	write(*,*) 'total linear brushes particles,  Ntl:', Ntl
 	write(*,*) 'total star brushes particles,    Nta:', Nta
-	write(*,*) 'total chemical bonds,         N_bond:', N_bond
   write(*,*) '****************************************************'
 	
 	write(*,*) '******************running_steps*********************'
@@ -493,54 +494,16 @@ subroutine continue_read_data(l)
 end subroutine continue_read_data
 
 
-
-
-
-subroutine write_lj_list
-	!----------------------------------------!
-	!write position to pos.txt
-	!input: pos
-	!External Variants: NN
-	!----------------------------------------!
-	implicit none
-	integer :: i,n
-	
-	n=size(lj_pair_list,1)
-	open(38,file='./data/lj_list.txt')
-		do i=1, n
-			write(38,380) 1.*lj_pair_list(i,1),1.*lj_pair_list(i,2)
-			380 format(2F5.0)
-		end do
-	close(38)
-end subroutine write_lj_list
-
-
-subroutine write_real_list
-	!----------------------------------------!
-	!write position to pos.txt
-	!input: pos
-	!External Variants: NN
-	!----------------------------------------!
-	implicit none
-	integer :: i, n
-	
-	n=size(real_pair_list,1)
-	open(41,file='./data/real_list.txt')
-		do i=1, n
-			write(41,410) 1.*real_pair_list(i,1),1.*real_pair_list(i,2)
-			410 format(2F10.0)
-		end do
-	close(41)
-end subroutine write_real_list
-
-
 subroutine height
 	!----------------------------------------!
 	!
 	!----------------------------------------!
+	use global_variables
+	use compute_acceleration
 	implicit none
 	integer i,j,k,l,m,n,p,q,r,s,num_stretch,num_collapse
-	real*8 :: rr,rsqr,rr1,rr2,rr3,maxh,Rg1,Rg1z,Rg2,Rg2z,max_hs_end,min_hs_end,hs_avg_arm
+	real*8 :: rr,rsqr,rr1,rr2,rr3,maxh,Rg1,Rg1z,Rg2,Rg2z
+	real*8 :: max_hs_end,min_hs_end,hs_avg_arm
 	real*8, dimension(3) :: rij
 	real*8, dimension(3) :: rij1,rij2,rij3,f1
 
@@ -879,6 +842,7 @@ subroutine write_height(j)
 	!----------------------------------------!
 	!
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer, intent(in) :: j
 	
@@ -909,6 +873,8 @@ subroutine histogram
 	!output: hist1(distribution hisotgram from PE to rod)
 	!External Variants: Npe
 	!----------------------------------------!
+	use global_variables
+	use compute_acceleration
 	implicit none
 	integer :: i, j, k, l, m, n, p, q, r, x, y, z
 	real*8, dimension(3) :: rij1,rij2,rij3,f1
@@ -1128,22 +1094,25 @@ subroutine write_hist
 	!input: hist1, hist2, hist3, hist4
 	!External Variants: SizeHist, LengthHist1...LengthHist4
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer i,j
 	
 	open(31,file='./data/phi.txt')
 		do i=1,SizeHist
 			phi_tot(i,1)=i*Lz/SizeHist
-			write(31,340) phi_tot(i,1),phi_tot(i,2),phi_l(i,2),phi_le(i,2),phi_s(i,2),phi_sb(i,2),&
-& 															 phi_se(i,2), phi_a(i,2),phi_i(i,2), phi_q(i,2)			
+			write(31,340) phi_tot(i,1),phi_tot(i,2),phi_l(i,2),phi_le(i,2),  &
+										phi_s(i,2),phi_sb(i,2),phi_se(i,2), phi_a(i,2),    &
+										phi_i(i,2), phi_q(i,2)			
 		end do
 		340 format(10F17.6)
 	close(31)
 	open(32,file='./data/theta.txt')
 		do i=1,SizeHist
 			theta_l(i,1)=i*pi/SizeHist
-			write(32,350) theta_l(i,1),   theta_l(i,2),  theta_lz(i,2),  theta_ssl(i,2),&
-&										theta_sslz(i,2),theta_sbl(i,2),theta_sblz(i,2),theta_bez(i,2)
+			write(32,350) theta_l(i,1),    theta_l(i,2),    theta_lz(i,2),    &
+										theta_ssl(i,2),  theta_sslz(i,2), theta_sbl(i,2),   &
+										theta_sblz(i,2), theta_bez(i,2)
 		end do
 		350 format(8F17.6)
 	close(32)
@@ -1275,6 +1244,7 @@ subroutine write_pos
 	!input: pos
 	!External Variants: NN
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer :: i
 
@@ -1293,6 +1263,7 @@ subroutine write_pos1
 	!input: j, pos
 	!External Variants: NN
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer :: i
 
@@ -1311,6 +1282,7 @@ subroutine write_vel
 	!input: pos
 	!External Variants: NN
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer :: i
 
@@ -1329,6 +1301,7 @@ subroutine write_vel1(j)
 	!input: pos
 	!External Variants: NN
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer :: i
 	integer, intent(in) :: j
@@ -1359,6 +1332,7 @@ subroutine write_acc
 	!input: pos
 	!External Variants: NN
 	!----------------------------------------!
+	use global_variables
 	implicit none
 	integer :: i
 	
@@ -1372,6 +1346,8 @@ end subroutine write_acc
 
 
 subroutine write_time(time)
+	use global_variables
+	implicit none
 	real*8, intent(in) :: time
 	open(10,file='./data/time.txt')
 	write(10,*) 'time:(seconds)', real(total_time)
