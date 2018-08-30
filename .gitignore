@@ -5,3 +5,6 @@ compute_acc.f90
 main
 force_data.txt
 force_data.txt
+*.txt
+test
+test.f90
