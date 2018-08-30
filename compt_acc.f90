@@ -6,20 +6,20 @@ module compute_acceleration
 	!lj potential
 	real*8,  private :: epsilon     !Energy unit epsilon in lj potential
   real*8,  private :: sigma       !Distance sigma in lj potential
-	real*8 :: rcl					!Cut off radius of LJ potential
-	real*8 :: rvl			    !Verlet list radius of LJ potential
+	real*8           :: rcl					!Cut off radius of LJ potential
+	real*8           :: rvl			    !Verlet list radius of LJ potential
   integer, private :: npair1      !number of pairs in the lj verlet sphere
- 	real*8 :: dr_max1     !max displacement of lj verlet list
+ 	real*8           :: dr_max1     !max displacement of lj verlet list
   !
 	!fene potential
-	real*8 :: R0_2			  !max length of FENE potential
-	real*8 :: kFENE			  !coefficient of FENE potential
-	integer :: N_bond		  !Number of Chemical bond of polymers
-	real*8 :: R_bond	    !length of chemical band
+	real*8           :: R0_2			  !max length of FENE potential
+	real*8           :: kFENE			  !coefficient of FENE potential
+	integer          :: N_bond		  !Number of Chemical bond of polymers
+	real*8           :: R_bond	    !length of chemical band
 	!
 	!coulomb potential
-	real*8 :: lb					!Bjerrum length
-	real*8 :: xi				  !friction coefficient
+	real*8           :: lb					!Bjerrum length
+	real*8           :: xi				  !friction coefficient
 	real*8,  private :: EF					!electric field
 	real*8,  private :: tol				  !tolerance
 	real*8,  private :: tau_rf			!ratio of time between real and fourier space
@@ -30,12 +30,12 @@ module compute_acceleration
 	real*8,  private :: rcc					!Cut off radius of real space
 	real*8,  private :: rcc2				!rcc2=rcc*rcc
 	real*8,  private :: rvc					!rvc=rcc+rsk
-	real*8 :: rsk					!Skin between cut off sphere and verlet list 
+	real*8           :: rsk					!Skin between cut off sphere and verlet list 
                                   !sphere in real space
-	integer :: real_verlet !call real verlet list or not
+	integer          :: real_verlet !call real verlet list or not
   real*8,  private :: real_itv    !Inteval of interpolation of Error Function
   integer, private :: npair2      !number of pairs in the real verlet sphere
- 	real*8 :: dr_max2     !max displacement of lj verlet list
+ 	real*8           :: dr_max2     !max displacement of lj verlet list
 	!
 	!reciprocal space
 	integer, private :: Kmax1			 	!max wave number of x direction
@@ -55,20 +55,20 @@ module compute_acceleration
 												!LJ potential verlet list
 	integer, allocatable, dimension(:,:), private :: real_pair_list
 												!real space verlet list
-	integer, allocatable, dimension( : ) :: charge
+	integer, allocatable, dimension( : )          :: charge
 												!charge number to monomer number
 	integer, allocatable, dimension(:,:), private :: fene_list
 												!pairs of two adjacent monomers
-	integer, allocatable, dimension( : ) :: anchor_list
+	integer, allocatable, dimension( : )          :: anchor_list
 												!number of the anchored monomer
 	real*8,  allocatable, dimension( : ), private :: exp_ksqr	
 												!coefficients in Fourier space
 	real*8,  allocatable, dimension( : ), private :: real_fun	
 												!Function list of erfc and coefficients in real space
 	real*8,  allocatable, dimension(:,:,:), private :: bspln_cof
-												!Coefficients of b-spline
+												!Coefficients of b-spline basis
 	real*8,  allocatable, dimension(:,:,:), private :: dspln_cof
-												!Coefficients of derivatives of b-spline
+												!Coefficients of derivatives of b-spline basis
 	complex (kind=8), allocatable, dimension(:,:,:), private :: Q_PME
 												!Q in SPME
 	complex (kind=8), allocatable, dimension(:,:,:), private :: U_PME
@@ -80,6 +80,19 @@ module compute_acceleration
 
 
 subroutine initialize_force_parameters
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
   !
@@ -168,9 +181,22 @@ end subroutine initialize_lj_parameters
 
 
 subroutine lj_verlet_list
-	!----------------------------------------!
-	!
-	!----------------------------------------!
+  !--------------------------------------!
+  !Construct lj_pair_list and lj_point by the link list
+  !method with the complexity of O(N)
+  !   
+  !Input
+  !   pos
+  !Output
+  !   lj_pair_list
+  !External Variables
+  !   NN, Lx, Ly, Lz, rv_lj, lj_pair_list, lj_point, pos
+  !Routine Referenced:
+  !1. rij_and_rr(rij, rr, i, j)
+  !Reference:
+  !Frenkel, Smit, 'Understanding molecular simulation: from
+  !algorithm to applications', Elsevier, 2002, pp.550-552. 
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer i,j,k,l,m,n,p,q,r
@@ -263,39 +289,39 @@ subroutine build_fene_list
   allocate(  anchor_list(Nta)   )
   !
 	!anchors of the polymers 
-	do i=1,Nga
-		anchor_list(i)=(i-1)*(arm*Nma+1)+1
+	do i = 1, Nga
+		anchor_list(i) = (i-1)*(arm*Nma+1) + 1
 	end do
-	do i=1,Ngl
-		anchor_list(i+Nga)=Nta+(i-1)*Nml+1
+	do i = 1, Ngl
+		anchor_list(i+Nga) = Nta + (i-1)*Nml + 1
 	end do
 	!
 	!star brushes fene list
 	l=0
-	do i=1,Nga
-		do k=1,Nma  		!the anchor to the branching point
-			l=l+1
-			fene_list(l,1)=(i-1)*(arm*Nma+1)+k
-			fene_list(l,2)=(i-1)*(arm*Nma+1)+k+1
+	do i = 1, Nga
+		do k = 1, Nma  		!the anchor to the branching point
+			l = l + 1
+			fene_list(l,1) = (i-1)*(arm*Nma+1) + k
+			fene_list(l,2) = (i-1)*(arm*Nma+1) + k+1
 		end do
-		do j=2,arm		  !the arms
-			l=l+1				  !the branching point to the first point of the arms
-			fene_list(l,1)=(i-1)*(arm*Nma+1)+Nma+1
-			fene_list(l,2)=(i-1)*(arm*Nma+1)+(Nma*(j-1)+1)+1
+		do j = 2, arm		  !the arms
+			l = l + 1				!the branching point to the first point of the arms
+			fene_list(l,1) = (i-1)*(arm*Nma+1) + Nma+1
+			fene_list(l,2) = (i-1)*(arm*Nma+1) + (Nma*(j-1)+1) + 1
 			do k=1,Nma-1	!the first point of the arms to the last point of the arms
-				l=l+1
-				fene_list(l,1)=(i-1)*(arm*Nma+1)+(Nma*(j-1)+1)+k
-				fene_list(l,2)=(i-1)*(arm*Nma+1)+(Nma*(j-1)+1)+k+1
+				l = l + 1
+				fene_list(l,1) = (i-1)*(arm*Nma+1) + (Nma*(j-1)+1) + k
+				fene_list(l,2) = (i-1)*(arm*Nma+1) + (Nma*(j-1)+1) + k+1
 			end do
 		end do
 	end do
 	!
 	!star brushes fene list		
-	do i=1,Ngl
-		do j=1,Nml-1
-			l=l+1
-			fene_list(l,1)=Nta+(i-1)*Nml+j
-			fene_list(l,2)=Nta+(i-1)*Nml+j+1
+	do i = 1, Ngl
+		do j = 1, Nml-1
+			l = l + 1
+			fene_list(l,1) = Nta + (i-1)*Nml + j
+			fene_list(l,2) = Nta + (i-1)*Nml + j+1
 		end do
 	end do
 end subroutine build_fene_list
@@ -303,7 +329,11 @@ end subroutine build_fene_list
 
 subroutine Initialize_ewald_parameters
   !--------------------------------------!
+  !Calculate alpha, Kmax1, Kmax2, Kmax3, rcc
   !
+  !Reference:
+  !Frenkel, Smit, 'Understanding molecular simulation: from
+  !algorithm to applications', Elsevier, 2002, pp.304-306. 
   !--------------------------------------!
   use global_variables
   implicit none
@@ -355,7 +385,8 @@ end subroutine Initialize_ewald_parameters
 
 subroutine build_charge
   !--------------------------------------!
-  !Initialize and charge.
+  !choose the charged particle from pos array to form
+  !a new array.
   !   
   !Input
   !   pos
@@ -372,44 +403,57 @@ subroutine build_charge
   
 	l=0
 	!star brushes
-	if (qq/=0) then
-		do i=1,Nga
-			do k=2,Nma+1     !the chain anchored to the plate
-				if (mod(k-1,man)==0) then
-					l=l+1
-					charge(l)=(i-1)*(arm*Nma+1)+k
-				end if
-			end do
-			do j=2,arm	 
-				do k=1,Nma
-					if (mod(k,man)==0) then
-						l=l+1
-						charge(l)=(i-1)*(arm*Nma+1)+((j-1)*Nma+1)+k
-					end if
-				end do
-			end do
+	do i=1,Nga
+		do k=2,Nma+1     !the chain anchored to the plate
+			if (mod(k-1,man)==0) then
+				l=l+1
+				charge(l)=(i-1)*(arm*Nma+1)+k
+			end if
 		end do
-		!linear brushes
-		do i=1,Ngl
-			do j=2,Nml
-				if (mod(j-1,man)==0) then
+		do j=2,arm	 
+			do k=1,Nma
+				if (mod(k,man)==0) then
 					l=l+1
-					charge(l)=Nta+(i-1)*Nml+j
+					charge(l)=(i-1)*(arm*Nma+1)+((j-1)*Nma+1)+k
 				end if
 			end do
 		end do
-		do i=Npe+1,NN
-			l=l+1
-			charge(l)=i
+	end do
+	!linear brushes
+	do i=1,Ngl
+		do j=2,Nml
+			if (mod(j-1,man)==0) then
+				l=l+1
+				charge(l)=Nta+(i-1)*Nml+j
+			end if
 		end do
-	end if
+	end do
+	!ions
+	do i=Npe+1,NN
+		l=l+1
+		charge(l)=i
+	end do
 end subroutine build_charge
 
 
 subroutine real_verlet_list
-	!----------------------------------------!
-	!
-	!----------------------------------------!
+  !--------------------------------------!
+  !Construct real_pair_list and real_point by the link list
+  !method with the complexity of O(N)
+  !   
+  !Input
+  !   pos
+  !Output
+  !   real_pair_list
+  !External Variables
+  !   Nq, Lx, Ly, Lz, rv_real,
+  !   real_pair_list, real_point, pos, charge
+  !Routine Referenced:
+  !1. rij_and_rr(rij, rr, i, j)
+  !Reference:
+  !Frenkel, Smit, 'Understanding molecular simulation: from
+  !algorithm to applications', Elsevier, 2002, pp.550-552. 
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer i,j,k,m,n,p,q,r,u,v,w
@@ -531,7 +575,9 @@ end subroutine fourier_function
 
 subroutine real_function
 	!----------------------------------------!
-	!
+	!make a erfc funciton table to fast calculate the function.
+	!however, the accuracy is very low, so we havn't use it in this
+	!program.
 	!----------------------------------------!
 	use global_variables
 	implicit none
@@ -552,10 +598,49 @@ subroutine real_function
 end subroutine real_function
 
 
+subroutine update_verlet_list
+  !--------------------------------------!
+  !When the max displacement of movement is greater than
+  !skin between cut off sphere and verlet list sphere,
+  !we need to update verlet list.
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !	 lj_verlet_list
+  !  real_verlet_list
+  !--------------------------------------!
+	implicit none
+
+	if ( dr_max1>(rvl-rcl)/2 ) then
+		call lj_verlet_list
+		dr_max1=0
+	end if
+	if ( dr_max2>rsk/2 .and. real_verlet /=0 ) then
+		call real_verlet_list
+		dr_max2=0
+	end if
+
+end subroutine update_verlet_list
+
+
 subroutine error_analysis
-	!---------------------------------------!
-	!
-	!---------------------------------------!
+  !--------------------------------------!
+  !
+  !Reference:
+  !1.The error is estimated by Kolafa1992,
+  !  JIRI KOLAFA, JOHN W. PERRAM, 'CUTOFF ERRORS IN THE 
+  !  EWALD SUMMATION FORMULAE FOR POINT CHARGE SYSTEMS',
+  !  Molecular Simulation, Vol. 9(5), pp.351-368, (1992).
+  !2.The true error e.g. RMS force is defined at:
+  !  Ulrich Essmann, Lalith Perera et al, 'A smooth particle
+  !  mesh Ewald method', Journal of Chemical Physics, Vol. 103(9),
+  !  (1995).
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	real*8 f_r, f_k, q_tot, rmsf, tol1, tau_rf1, sumf1, sumf2,st,fn,tm1,tm2
@@ -632,11 +717,24 @@ end subroutine
 
 
 subroutine Compute_Force
-	!-----------------------------------------!
-	!input: pos
-	!output: force
-	!including:
-	!-----------------------------------------!
+  !--------------------------------------!
+  !Each step update lj force and fene force
+  !however, the coulomb is updated at each multisteps.
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !Reference:
+  !1.The calculation of random force is referred to:
+  !  Tamar Schlick, 'Molecular Modeling and Simulation:
+  !  An Interdisciplinary Guide', 2nd edition, pp.482,
+  !  Springer, 2010.
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	real*8, dimension(3) :: rij
@@ -666,6 +764,35 @@ subroutine Compute_Force
 		acc(j,1:3)=0
 	end do
 end subroutine Compute_Force
+
+
+subroutine fene_force
+	!-----------------------------------------!
+	!Note: rij=ri-rj
+	!-----------------------------------------!
+	use input_output
+	use global_variables
+	implicit none
+	integer :: i,j,k,n
+	real*8 :: rsqr
+	real*8, dimension(3) :: rjk,ff
+	do i=1, N_bond
+		j=fene_list(i,1)
+		k=fene_list(i,2)
+		call rij_and_rr(rjk, rsqr, j, k)
+		if(rsqr>R0_2) then
+			write(*,*) 'The bond is break off!'
+			write(*,*) k*1.,j*1.,sqrt(rsqr)
+			call write_pos
+			call write_vel
+			call write_acc
+			stop
+		end if
+		ff=-kfene*R0_2/(R0_2-rsqr)*rjk
+		acc(j,:)=acc(j,:)+ff
+		acc(k,:)=acc(k,:)-ff
+	end do
+end subroutine fene_force
 
 
 subroutine lj_force
@@ -771,8 +898,12 @@ subroutine real_space
 			end if
 			rsqr=rij(1)*rij(1)+rij(2)*rij(2)+rij(3)*rij(3)
 			if (rsqr<rcc2) then
+! 				!
+! 				!Calculate acc by look up table.
 ! 				x=nint(rsqr/real_itv)
 ! 				acc_c(i,:)=acc_c(i,:)+pos(i,4)*pos(j,4)*real_fun(x)*rij
+				!
+				!Calculate acc by fortran function.
  				rr=sqrt(rsqr)
 				ff=pos(i,4)*pos(j,4)/rsqr*( erfc(alpha*rr)/rr + c2*exp(-alpha2*rsqr) )*rij*c1
 				acc_c(i,:)=acc_c(i,:)+ff
@@ -876,8 +1007,9 @@ subroutine Standard_Ewald
 	end do
 end subroutine Standard_Ewald
 
-
-
+!
+!The following program are the SPME program.
+!
 subroutine SPME_Ewald
 	!-----------------------------------------!
 	!
@@ -897,71 +1029,21 @@ subroutine SPME_Ewald
 	real*8, dimension(Nq,3) :: acc_f
 	integer :: i,m
 	
-! 	call cpu_time(st)
-call splcof(SPx, dSPx, iqmap, ordr(1), 1)
-call splcof(SPy, dSPy, jqmap, ordr(2), 2)
-call splcof(SPz, dSPz, kqmap, ordr(3), 3)
-! 	call cpu_time(fn)
-! 	write(*,*) fn-st
+	call splcof(SPx, dSPx, iqmap, ordr(1), 1)
+	call splcof(SPy, dSPy, jqmap, ordr(2), 2)
+	call splcof(SPz, dSPz, kqmap, ordr(3), 3)
 
-! 	call cpu_time(st)
-call MapCharges(SPx, SPy, SPz, iqmap, jqmap, kqmap)
-! 	call cpu_time(fn)
-! 	write(*,*) fn-st
+	call MapCharges(SPx, SPy, SPz, iqmap, jqmap, kqmap)
 
-! 	call cpu_time(st)
-call pmeOrthoConvBC
-! 	call cpu_time(fn)
-! 	write(*,*) fn-st
+	call pmeOrthoConvBC
 
-! 	call cpu_time(st)
-call IFrc(acc_f, SPx, SPy, SPz, dSPx, dSPy, dSPz, iqmap, jqmap, kqmap)
-! 	call cpu_time(fn)
-! 	write(*,*) fn-st
+	call IFrc(acc_f, SPx, SPy, SPz, dSPx, dSPy, dSPz, iqmap, jqmap, kqmap)
 
-call ZeroForce(acc_f)
+	call ZeroForce(acc_f)
 
-! 	write(*,*) charge(1:100)
-! 	write(*,*) acc_f(1:10,1)
-! 	stop
 	acc_c(charge,:)=acc_c(charge,:)+acc_f*lb/Beta   !Nq和NN不一样的时候这是不对的
-! 	do m=1,Nq
-! 		i=charge(m)
-! 		acc_c(i,:)=acc_c(i,:)+acc_f(m,:)*lb/Beta
-! 	end do
-! 	write(*,*) acc(1:10,1)
-! 	stop
+
 end subroutine SPME_Ewald
-
-
-
-subroutine fene_force
-	!-----------------------------------------!
-	!Note: rij=ri-rj
-	!-----------------------------------------!
-	use input_output
-	use global_variables
-	implicit none
-	integer :: i,j,k,n
-	real*8 :: rsqr
-	real*8, dimension(3) :: rjk,ff
-	do i=1, N_bond
-		j=fene_list(i,1)
-		k=fene_list(i,2)
-		call rij_and_rr(rjk, rsqr, j, k)
-		if(rsqr>R0_2) then
-			write(*,*) 'The bond is break off!'
-			write(*,*) k*1.,j*1.,sqrt(rsqr)
-			call write_pos
-			call write_vel
-			call write_acc
-			stop
-		end if
-		ff=-kfene*R0_2/(R0_2-rsqr)*rjk
-		acc(j,:)=acc(j,:)+ff
-		acc(k,:)=acc(k,:)-ff
-	end do
-end subroutine fene_force
 
 
 
@@ -1045,16 +1127,18 @@ subroutine MapCharges(SPx, SPy, SPz, iqmap, jqmap, kqmap)
 	!-----------------------------------------!
 	use global_variables
 	implicit none
-	real*8, dimension(Nq,ordr(1)), intent(in) :: SPx
-	real*8, dimension(Nq,ordr(2)), intent(in) :: SPy
-	real*8, dimension(Nq,ordr(3)), intent(in) :: SPz
+	real*8,  dimension(Nq,ordr(1)), intent(in) :: SPx
+	real*8,  dimension(Nq,ordr(2)), intent(in) :: SPy
+	real*8,  dimension(Nq,ordr(3)), intent(in) :: SPz
 	integer, dimension(Nq,ordr(1)), intent(in) :: iqmap
 	integer, dimension(Nq,ordr(2)), intent(in) :: jqmap
 	integer, dimension(Nq,ordr(3)), intent(in) :: kqmap
 	integer :: h,i,j,k,ii,jj,kk,t,ng1o,ng2o,ng3o,ih,jh,kh
-	real*8 :: dqx,dqxy,dd,qmij(ordr(1),ordr(2)),SPxh(ordr(1),1),SPyh(1,ordr(2)),SPzh(ordr(3))
-	real (kind=8), dimension(ordr(1),ordr(2),ordr(3)) :: qmijk
+	real*8  :: dqx,dqxy,dd,qmij(ordr(1),ordr(2))
+	real*8  :: SPxh(ordr(1),1),SPyh(1,ordr(2)),SPzh(ordr(3))
 	integer :: imp(ordr(1)),jmp(ordr(2)),kmp(ordr(3))
+	real*8, dimension(ordr(1),ordr(2),ordr(3)) :: qmijk
+
 	Q_PME=0
 	
 	ng1o=ng(1)-ordr(1)+2
@@ -1067,31 +1151,15 @@ subroutine MapCharges(SPx, SPy, SPz, iqmap, jqmap, kqmap)
 		kmp=kqmap(h,:)
 		ih=imp(1)
 		jh=jmp(1)
-		kh=kmp(1)
-		
-	! 		if (ih<ng1o .and. jh<ng2o .and. kh<ng3o) then
-	SPxh(:,1)=SPx(h,:)
-	SPyh(1,:)=SPy(h,:)
-	SPzh=SPz(h,:)
-	qmij=matmul(SPxh,SPyh)
-	do i=1,ordr(3)
-		qmijk(:,:,i)=SPzh(i)*qmij
-	end do
-	Q_PME(imp,jmp,kmp)=Q_PME(imp,jmp,kmp)+qmijk
-	! 		else
-	! 			do i=1,ordr(1)
-	! 				ii=iqmap(h,i)
-	! 				dqx=SPx(h,i)
-	! 				do j=1,ordr(2)
-	! 					jj=jqmap(h,j)
-	! 					dqxy=dqx*SPy(h,j)
-	! 					do k=1,ordr(3)
-	! 						kk=kqmap(h,k)
-	! 						Q_PME(ii,jj,kk)=Q_PME(ii,jj,kk)+dqxy*SPz(h,k)
-	! 					end do
-	! 				end do
-	! 			end do
-	! 		end if
+		kh=kmp(1)	
+		SPxh(:,1)=SPx(h,:)
+		SPyh(1,:)=SPy(h,:)
+		SPzh=SPz(h,:)
+		qmij=matmul(SPxh,SPyh)
+		do i=1,ordr(3)
+			qmijk(:,:,i)=SPzh(i)*qmij
+		end do
+		Q_PME(imp,jmp,kmp)=Q_PME(imp,jmp,kmp)+qmijk
 	end do
 
 end subroutine Mapcharges
@@ -1118,25 +1186,14 @@ subroutine pmeOrthoConvBC
   call dfftw_destroy_plan_ ( plan_forward )
   
 	fQ_PME(1,1,1)=0				  
-	
-! 	do i=1, ng(1)
-! 	  do j=1,ng(2)
-! 	    do k = 1,ng(3)
-! 				Enrg=Enrg+0.5*abs(fQ_PME(i,j,k)*fQ_PME(i,j,k))*B_PME(i,j,k)*C_PME(i,j,k)
-! 	    end do
-! 	  end do
-! 	end do
-! 	Enrg=Enrg/(ng(1)*ng(2)*ng(3))
 
-fQBC=fQ_PME*BC_PME
+	fQBC=fQ_PME*BC_PME
 
-call dfftw_plan_dft_3d_ ( plan_backward, ng(1), ng(2), ng(3), fQBC, U_PME, FFTW_BACKWARD, FFTW_Estimate )
+	call dfftw_plan_dft_3d_ ( plan_backward, ng(1), ng(2), ng(3), fQBC, U_PME, FFTW_BACKWARD, FFTW_Estimate )
 
-call dfftw_execute_ ( plan_backward )	
+	call dfftw_execute_ ( plan_backward )	
 
-call dfftw_destroy_plan_ ( plan_backward )
-
-! 	U_PME=U_PME/(ng(1)*ng(2)*ng(3))
+	call dfftw_destroy_plan_ ( plan_backward )
 
 end subroutine pmeOrthoConvBC
 
@@ -1173,57 +1230,37 @@ subroutine IFrc(acc_f, Bx, By, Bz, dBx, dBy, dBz, iqm, jqm, kqm)
 	dqmijkx=0
 	dqmijky=0
 	dqmijkz=0
+
 	do h=1,Nq
+
 		f1=0
 		f2=0
 		f3=0
 		ih=iqm(h,1)
 		jh=jqm(h,2)
 		kh=kqm(h,3)
-! 		if (ih<ng1o .and. jh<ng2o .and. kh<ng3o) then
-Bxh(:,1)=Bx(h,:)
-Byh(1,:)=By(h,:)
-Bzh=Bz(h,:)
-dBxh(:,1)=dBx(h,:)
-dByh(1,:)=dBy(h,:)
-dBzh=dBz(h,:)
-dqmijx=matmul(dBxh,Byh)
-dqmijy=matmul(Bxh,dByh)
-dqmijz=matmul(Bxh,Byh)
-do i=1,ordr(3)
-	dqmijkx(:,:,i) = Bzh(i)*dqmijx
-	dqmijky(:,:,i) = Bzh(i)*dqmijy
-	dqmijkz(:,:,i) = dBzh(i)*dqmijz
-end do
-Ureg = U_PME(iqm(h,:),jqm(h,:),kqm(h,:))
-      f1 = -sum(dqmijkx*Ureg)									!the coefficient of the inverse fft in fftw
-      f2 = -sum(dqmijky*Ureg)
-      f3 = -sum(dqmijkz*Ureg)
-! 		else
-! 			ii=1
-! 			do i=1,ordr(1)
-! 				jj=1
-! 				dqx=Bx(h,ii)
-! 				tqx=dBx(h,ii)
-! 				do j=1,ordr(2)
-! 					kk=1
-! 					tdqxy=tqx*By(h,jj)
-! 					dtqxy=dqx*dBy(h,jj)
-! 					ddqxy=dqx*By(h,jj)
-! 					do k=1,ordr(3)
-! 						ulm=U_PME(iqm(h,i),jqm(h,j),kqm(h,k))
-! 						f1=f1-tdqxy*Bz(h,kk)*ulm !the coefficient of the inverse fft in fftw
-! 						f2=f2-dtqxy*Bz(h,kk)*ulm
-! 						f3=f3-ddqxy*dBz(h,kk)*ulm
-! 						kk=kk+1
-! 					end do
-! 					jj=jj+1
-! 				end do
-! 				ii=ii+1
-! 			end do
-! 		end if
-acc_f(h,:)=(/real(f1)*ng(1)/gdim(1),real(f2)*ng(2)/gdim(2),real(f3)*ng(3)/gdim(3)/)/(ng(1)*ng(2)*ng(3))
-end do
+		Bxh(:,1)=Bx(h,:)
+		Byh(1,:)=By(h,:)
+		Bzh=Bz(h,:)
+		dBxh(:,1)=dBx(h,:)
+		dByh(1,:)=dBy(h,:)
+		dBzh=dBz(h,:)
+		dqmijx=matmul(dBxh,Byh)
+		dqmijy=matmul(Bxh,dByh)
+		dqmijz=matmul(Bxh,Byh)
+		do i=1,ordr(3)
+			dqmijkx(:,:,i) = Bzh(i)*dqmijx
+			dqmijky(:,:,i) = Bzh(i)*dqmijy
+			dqmijkz(:,:,i) = dBzh(i)*dqmijz
+		end do
+		Ureg = U_PME(iqm(h,:),jqm(h,:),kqm(h,:))
+	      f1 = -sum(dqmijkx*Ureg)			!the coefficient of the inverse fft in fftw
+	      f2 = -sum(dqmijky*Ureg)
+	      f3 = -sum(dqmijkz*Ureg)
+
+		acc_f(h,:) = ( /real(f1)*ng(1)/gdim(1), real(f2)*ng(2)/gdim(2),       &
+			              real(f3)*ng(3)/gdim(3)/ ) / (ng(1)*ng(2)*ng(3))
+	end do
 
 end subroutine IFrc
 
@@ -1255,6 +1292,7 @@ end subroutine ZeroForce
 
 subroutine bspln_coeffs
 	!----------------------------------------!
+	!Calculate the coefficients of the b-spline basis function.
 	!2010, Gradimir V. Milovanovic, Applied Mathematics Letters
 	!----------------------------------------!
 	use global_variables
@@ -1310,8 +1348,7 @@ subroutine bspln_coeffs
 		end do
 		deallocate(a)
 	end do
-! 	write(*,*) bspln_cof(:,:,1)
-! 	stop
+
 end subroutine bspln_coeffs
 
 
@@ -1346,7 +1383,8 @@ subroutine PME_BC
       do k = 1,ng(3)
         dxyz = dxy + mz(k)*mz(k)
 				if (i+j+k>3) then													!避免除以0
-        	BC_PME(i,j,k) = bx(i)*conjg(bx(i))*by(j)*conjg(by(j))*bz(k)*conjg(bz(k))*ex(i)*ey(j)*ez(k)/dxyz
+        	BC_PME(i,j,k) = bx(i)*conjg(bx(i)) * by(j)*conjg(by(j)) *        &
+        									bz(k)*conjg(bz(k)) * ex(i)*ey(j)*ez(k) / dxyz
 				end if
       end do
     end do
@@ -1392,12 +1430,14 @@ subroutine pmeOrthoTabBC(bv, mv, ev, xyz)
 	do i=0, ng(xyz)-1
 		bsp=0
 		do j=0, ord-2
-			bsp=bsp+bspln(j+1.D0,ord)*cmplx(cos(2*pi*i*j/ng(xyz)),sin(2*pi*i*j/ng(xyz)))
+			bsp = bsp + bspln(j+1.D0,ord) * &
+						cmplx( cos(2*pi*i*j/ng(xyz)), sin(2*pi*i*j/ng(xyz)) )
 		end do
 		if (abs(bsp)<1e-10) then
 			bsp=1e15
 		end if
-		bv(i+1)=cmplx(cos(2*pi*i*(ord-1)/ng(xyz)),sin(2*pi*i*(ord-1)/ng(xyz)))/bsp !complex number can be divided
+		bv(i+1)=cmplx( cos(2*pi*i*(ord-1)/ng(xyz)), sin(2*pi*i*(ord-1)/ng(xyz)) ) &
+		        / bsp !complex number can be divided
 	end do
 	
 end subroutine pmeOrthoTabBC
@@ -1439,59 +1479,6 @@ recursive real*8 Function bspln(x,ord) result(y)
   end if
 
 end Function bspln
-
-
-subroutine rij_and_rr(rij, rsqr, i, j)
-  !-----------------------------------------!
-  !compute displacement vector and displacement of two particles
-  !input:
-  !  post(pos or pos1), i, j(particle number) 
-  !output:
-  !  rij(displacement vecter), rr(square of displacement)
-  !External Variant:
-  !  Lz(used in period condition)
-  !note:
-  !  including period condition
-  !-----------------------------------------!
-  use global_variables
-  implicit none
-  real*8, dimension(3), intent(out) :: rij
-  real*8, intent(out) :: rsqr
-  integer, intent(in) :: i
-  integer, intent(in) :: j
-
-  rij = pos(i,1:3) - pos(j,1:3)
-
-  if ( rij(1) > Lx/2 ) then
-    rij(1) = rij(1) - Lx
-  elseif( rij(1) <= -Lx/2 ) then
-    rij(1) = rij(1) + Lx
-  end if
-  if ( rij(2) > Ly/2 ) then
-    rij(2) = rij(2) - Ly
-  elseif( rij(2) <= -Ly/2 ) then
-    rij(2) = rij(2) + Ly
-  end if
-
-  rsqr = rij(1)*rij(1) + rij(2)*rij(2) + rij(3)*rij(3)
-
-end subroutine rij_and_rr
-
-subroutine gauss_dist(mu, sigma, rnd)
-	!---------------------------------------!
-	!
-	!---------------------------------------!
-	use global_variables
-	implicit none
-	real*8, intent(out) :: rnd
-	real*8, intent(in) :: mu, sigma
-	real*8 rnd1, rnd2
-	
-	call random_number(rnd1)
-	call random_number(rnd2)
-	rnd=sqrt(-2*log(rnd1))*cos(2*pi*rnd2)
-	rnd=mu+rnd*sigma
-end subroutine gauss_dist
 
 
 end module compute_acceleration

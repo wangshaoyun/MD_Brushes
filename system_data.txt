@@ -10,8 +10,10 @@
 52							! Nml: Monomers of each linear chain, mod(Nml-1,man)==0 
 33							! Ngl: grafting number of linear chains
 3 							!	man: Manning effect : every 'man' particle have one charge	
-1500						! StepNum0
-10000						! StepNum: 	steps of running
-2000 				  	! DeltaStep: steps of every calculation of physical quantities
+5000000		  		! StepNum0
+10000000			  ! StepNum: 	steps of running
+2000            ! DeltaStep1: height
+2000            ! DeltaStep2: histogram
+2000            ! DeltaStep3: write data
 10							! multistep
 0.005D0 				! dt: 			distance of each move

@@ -32,14 +32,14 @@ save
 !##################end systems coefficient#################!
 
 !##################running and Histogram###################!
-	integer :: restart_or_continue  !Restart or continue after breaking off
-	integer :: uniform_or_random		!Uniform grafted or random grafted
+	integer :: restart_or_continue  !restart or continue after breaking off
+	integer :: uniform_or_random		!uniform grafted or random grafted
 	integer :: StepNum0							!Steps of preheating
 	integer :: StepNum							!Steps of running
-	integer :: DeltaStep				    !steps of each calculation of physical 
-																	!quantities
-	integer :: step									!Ordering number
-	integer :: dstep								!Ordering number
+	integer :: DeltaStep1				    !step inteval, height
+	integer :: DeltaStep2				    !step inteval, histogram
+	integer :: DeltaStep3				    !step inteval, write data
+	integer :: step									!ordering number
 	integer :: multistep						!each multistep recalculate the coulomb force
 	real*8  :: dt										!time of each move
 	!
@@ -57,5 +57,60 @@ save
 	real*8, allocatable, dimension(:,:) :: vel		!array of velocity
 	real*8, allocatable, dimension(:,:) :: acc		!array of accelaration
 !########################end arrays########################!
+
+
+contains
+
+	subroutine rij_and_rr(rij, rsqr, i, j)
+  !-----------------------------------------!
+  !compute displacement vector and displacement of two particles
+  !input:
+  !  post(pos or pos1), i, j(particle number) 
+  !output:
+  !  rij(displacement vecter), rr(square of displacement)
+  !External Variant:
+  !  Lz(used in period condition)
+  !note:
+  !  including period condition
+  !-----------------------------------------!
+  implicit none
+  real*8, dimension(3), intent(out) :: rij
+  real*8, intent(out) :: rsqr
+  integer, intent(in) :: i
+  integer, intent(in) :: j
+
+  rij = pos(i,1:3) - pos(j,1:3)
+
+  if ( rij(1) > Lx/2 ) then
+    rij(1) = rij(1) - Lx
+  elseif( rij(1) <= -Lx/2 ) then
+    rij(1) = rij(1) + Lx
+  end if
+  if ( rij(2) > Ly/2 ) then
+    rij(2) = rij(2) - Ly
+  elseif( rij(2) <= -Ly/2 ) then
+    rij(2) = rij(2) + Ly
+  end if
+
+  rsqr = rij(1)*rij(1) + rij(2)*rij(2) + rij(3)*rij(3)
+
+end subroutine rij_and_rr
+
+
+subroutine gauss_dist(mu, sigma, rnd)
+	!---------------------------------------!
+	!
+	!---------------------------------------!
+	implicit none
+	real*8, intent(out) :: rnd
+	real*8, intent(in) :: mu, sigma
+	real*8 rnd1, rnd2
+	
+	call random_number(rnd1)
+	call random_number(rnd2)
+	rnd=sqrt(-2*log(rnd1))*cos(2*pi*rnd2)
+	rnd=mu+rnd*sigma
+end subroutine gauss_dist
+
 
 end module global_variables

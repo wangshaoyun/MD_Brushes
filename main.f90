@@ -59,28 +59,22 @@ implicit none
 	end if
 
 	!##############preheating##############!
-	if ( i <= StepNum0 ) then					
+	if ( i <= StepNum0 ) then
 		do step=i, StepNum0
-			do dstep=1, DeltaStep											
-		 		call new_position
-				if (mod(dstep,9)==0 .and. step<50) then
-					call rescale_velocity
-				end if
-				if ( dr_max1>(rvl-rcl)/2 ) then
-					call lj_verlet_list
-					dr_max1=0
-				end if
-				if ( dr_max2>rsk/2 .and. real_verlet /=0 ) then
-					call real_verlet_list
-					dr_max2=0
-				end if
-			end do
-			call height
-			call write_height(step)
-			if (mod(step,10)==0) then
-				call error_analysis
+	 		call new_position
+	 		!
+	 		!Rescale velocity to avoid the break of chemical bonds
+			if ( mod( (step-1)*DeltaStep+dstep, 20 ) == 0 .and. step<50 ) then
+				call rescale_velocity
+			end if
+			call update_verlet_list
+			if ( mod(step,DeltaStep1) == 0 ) then
+				call height
 				call write_height(step)
-				call write_pos1										 
+			end if
+			if ( mod(step,DeltaStep3) == 0 ) then
+				call error_analysis
+				call write_pos1
 				call write_vel1(step)
 			end if
 		end do
@@ -89,23 +83,16 @@ implicit none
 
 	!################running###############!
 	do step=i,StepNum0+StepNum						
-		do dstep=1, DeltaStep							
-	 		call new_position
-			if ( dr_max1>(rvl-rcl)/2 ) then
-				call lj_verlet_list
-				dr_max1=0
-			end if
-			if ( dr_max2>rsk/2 .and. real_verlet /=0 ) then
-				call real_verlet_list
-				dr_max2=0
-			end if
-			if (mod(dstep,1000)==0) then			
-				call histogram
-			end if
-		end do
-		call height
-		call write_height(step)
-		if (mod(step,10)==0) then
+ 		call new_position
+		call update_verlet_list
+		if ( mod(step,DeltaStep1) == 0 ) then
+			call height
+			call write_height(step)
+		end if
+		if ( mod(step,DeltaStep2) == 0 ) then			
+			call histogram
+		end if
+		if ( mod(step,DeltaStep3) == 0 ) then
 			call write_pos1										
 			call write_vel1(step)
 			call write_hist
@@ -116,7 +103,7 @@ implicit none
 	call cpu_time(finished)
 	total_time=finished-started+total_time
 	call write_time(total_time)
-	write(*,*) 'finished!'
+	write(*,*) 'Finished!'
 	
 end program
 

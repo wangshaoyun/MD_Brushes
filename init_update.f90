@@ -4,18 +4,34 @@ contains
 
 
 subroutine Initialize_position
-	!-----------------------------------------!
-	!input: pos
-	!output: pos
-	!External variants: R_bond, R_box, Lz, Npe, qq
-	!note: the box's radius is (R_rod,R_box) and height is (-Lz/2, Lz/2)
-	!-----------------------------------------!
+  !--------------------------------------!
+  !Initialize position array
+  !
+  !Input
+  !  pos
+  !Output
+  !  pos
+  !External Variables
+  !  uniform_or_random, Nq, qq, charge
+  !Routine Referenced:
+  !1.random_star_brushes(l)
+  !2.random_linear_brushes(l)
+  !3.uniform_star_brushes(l)
+  !4.uniform_linear_brushes(l)
+  !5.initialize_ions
+  !note:
+	!1.Because initialize can be unreal, there are thousand initial
+	!	 method in thousand people's mind.
+	!2.The monomer distributed in the space by random walk , so it may go to 
+	!  cul-de-sac when the density is high.
+  !--------------------------------------!
 	use compute_acceleration, only : charge
 	use global_variables
 	implicit none
 	integer :: l, i
 
 	l=0
+	!
 	!Graft star and linear brushes
 	if ( uniform_or_random == 1) then
 		call random_star_brushes(l)
@@ -32,10 +48,27 @@ subroutine Initialize_position
 	do i=1,Nq/(nint(abs(qq))+1)
 		pos(charge(i),4)=qq									
 	end do
+
+	write(*,*) 'Inititalize position is finished!'
 end subroutine Initialize_Position
 
 
 subroutine random_star_brushes(l)
+  !--------------------------------------!
+  !Initialize star brushes.
+  !
+  !Input
+  !  l, pos
+  !Output
+  !  l, pos
+  !External Variables
+  !  
+  !Routine Referenced:
+  !   rij_and_rr, period_condition_rij
+  !Reference:
+  !		Spherical coordinate on Wiki to generate uniform distribution
+  !   on the sphere surface.
+  !--------------------------------------!
 	use compute_acceleration, only : R_bond
 	use global_variables
 	implicit none
@@ -56,6 +89,9 @@ subroutine random_star_brushes(l)
 			pos(l,1)=rnd1*Lx-Lx/2
 			pos(l,2)=rnd2*Ly-Ly/2
 			pos(l,3)=0
+			!
+			!Jugde whether the particle is close the former paritcle
+			!too much.
 			do n=1,l-1
 				call rij_and_rr(rij,rsqr,n,l)
 				if (rsqr<0.8) then
@@ -74,28 +110,24 @@ subroutine random_star_brushes(l)
 					call random_number(rnd1)
 					call random_number(rnd2)
 					if (k==1 .and. j/=1) then		!branching point
+						!
+						!uniform distribution on the sphere surface
 						pos(l,1)=pos(l-(j-2)*Nma-1,1)+R_bond*cos(2*pi*rnd2)*sin(pi*rnd1)
 						pos(l,2)=pos(l-(j-2)*Nma-1,2)+R_bond*sin(2*pi*rnd2)*sin(pi*rnd1)
 						pos(l,3)=pos(l-(j-2)*Nma-1,3)+R_bond*cos(pi*rnd1)
 					else
 						if(p<10) then
-							rnd1=rnd1/1000
+							rnd1=rnd1/1000 !let the monomer go to the up direction
 						end if
 						pos(l,1)=pos(l-1,1)+R_bond*sin(pi*rnd1)*cos(2*pi*rnd2)
 						pos(l,2)=pos(l-1,2)+R_bond*sin(pi*rnd1)*sin(2*pi*rnd2)
 						pos(l,3)=pos(l-1,3)+R_bond*cos(pi*rnd1)
 					end if
-						!periodic condition
-					if (pos(l,1)>Lx/2) then
-						pos(l,1)=pos(l,1)-Lx
-					elseif(pos(l,1)<=-Lx/2) then
-							pos(l,1)=pos(l,1)+Lx
-					end if
-					if (pos(l,2)>Ly/2) then
-						pos(l,2)=pos(l,2)-Ly
-					elseif(pos(l,2)<=-Ly/2) then
-						pos(l,2)=pos(l,2)+Ly
-					end if
+					!periodic condition
+					call period_condition_rij(pos(l,:))
+					!
+					!Jugde whether the particle is close the former paritcle
+					!too much.
 					do n=1,l-1
 						call rij_and_rr(rij,rsqr,n,l)
 						if (rsqr<0.7 .or. pos(l,3)<0.9) then
@@ -105,7 +137,6 @@ subroutine random_star_brushes(l)
 						end if
 					end do
 				end do
-!						write(*,*) l,j,k,pos(l,:)
     	end do
 		end do
 	end do
@@ -113,6 +144,21 @@ end subroutine random_star_brushes
 
 
 subroutine random_linear_brushes(l)
+  !--------------------------------------!
+  !Initialize linear brushes.
+  !
+  !Input
+  !  l, pos
+  !Output
+  !  l, pos
+  !External Variables
+  !  
+  !Routine Referenced:
+  !  rij_and_rr, period_condition_rij
+  !Reference:
+  !		Spherical coordinate on Wiki to generate uniform distribution
+  !   on the sphere surface.
+  !--------------------------------------!
 	use compute_acceleration, only : R_bond
 	use global_variables
 	implicit none
@@ -133,6 +179,9 @@ subroutine random_linear_brushes(l)
 			pos(l,1)=rnd1*Lx+Lx/2
 			pos(l,2)=rnd2*Ly+Ly/2
 			pos(l,3)=0
+			!
+			!Jugde whether the particle is close the former paritcle
+			!too much.
 			do n=1,l-1
 				call rij_and_rr(rij,rsqr,n,l)
 				if (rsqr<0.8) then
@@ -158,16 +207,11 @@ subroutine random_linear_brushes(l)
 				pos(l,1)=pos(l-1,1)+R_bond*sin(pi*rnd1)*cos(2*pi*rnd2)
 				pos(l,2)=pos(l-1,2)+R_bond*sin(pi*rnd1)*sin(2*pi*rnd2)
 				pos(l,3)=pos(l-1,3)+R_bond*cos(pi*rnd1)
-				if (pos(l,1)>Lx/2) then
-					pos(l,1)=pos(l,1)-Lx
-				elseif(pos(l,1)<=-Lx/2) then
-					pos(l,1)=pos(l,1)+Lx
-				end if
-				if (pos(l,2)>Ly/2) then
-					pos(l,2)=pos(l,2)-Ly
-				elseif(pos(l,2)<=-Ly/2) then
-					pos(l,2)=pos(l,2)+Ly
-				end if
+				!periodic condition
+				call period_condition_rij(pos(l,:))
+				!
+				!Jugde whether the particle is close the former paritcle
+				!too much.
 				do n=1,l-1
 					call rij_and_rr(rij,rsqr,n,l)
 					if (rsqr<0.7 .or. pos(l,3)<0.9) then
@@ -184,6 +228,21 @@ end subroutine random_linear_brushes
 
 
 subroutine uniform_star_brushes(l)
+  !--------------------------------------!
+  !Initialize star brushes.
+  !
+  !Input
+  !  l, pos
+  !Output
+  !  l, pos
+  !External Variables
+  !  
+  !Routine Referenced:
+  !   rij_and_rr, period_condition_rij
+  !Reference:
+  !		Spherical coordinate on Wiki to generate uniform distribution
+  !   on the sphere surface.
+  !--------------------------------------!
 	use compute_acceleration, only : R_bond
 	use global_variables
 	implicit none
@@ -229,16 +288,10 @@ subroutine uniform_star_brushes(l)
 							pos(l,3)=pos(l-1,3)+R_bond*cos(pi*rnd1)
 						end if
 						!periodic condition
-						if (pos(l,1)>Lx/2) then
-							pos(l,1)=pos(l,1)-Lx
-						elseif(pos(l,1)<=-Lx/2) then
-							pos(l,1)=pos(l,1)+Lx
-						end if
-						if (pos(l,2)>Ly/2) then
-							pos(l,2)=pos(l,2)-Ly
-						elseif(pos(l,2)<=-Ly/2) then
-							pos(l,2)=pos(l,2)+Ly
-						end if
+						call period_condition_rij(pos(l,:))
+						!
+						!Jugde whether the particle is close the former paritcle
+						!too much.
 						do n=1,l-1
 							call rij_and_rr(rij,rsqr,n,l)
 							if (rsqr<0.7 .or. pos(l,3)<0.9) then
@@ -258,6 +311,21 @@ end subroutine uniform_star_brushes
 
 
 subroutine uniform_linear_brushes(l)
+  !--------------------------------------!
+  !Initialize star brushes.
+  !
+  !Input
+  !  l, pos
+  !Output
+  !  l, pos
+  !External Variables
+  !  
+  !Routine Referenced:
+  !   rij_and_rr, period_condition_rij
+  !Reference:
+  !		Spherical coordinate on Wiki to generate uniform distribution
+  !   on the sphere surface.
+  !--------------------------------------!
 	use compute_acceleration, only : R_bond
 	use global_variables
 	implicit none
@@ -297,16 +365,11 @@ subroutine uniform_linear_brushes(l)
 					pos(l,1)=pos(l-1,1)+R_bond*sin(pi*rnd1)*cos(2*pi*rnd2)
 					pos(l,2)=pos(l-1,2)+R_bond*sin(pi*rnd1)*sin(2*pi*rnd2)
 					pos(l,3)=pos(l-1,3)+R_bond*cos(pi*rnd1)
-					if (pos(l,1)>Lx/2) then
-						pos(l,1)=pos(l,1)-Lx
-					elseif(pos(l,1)<=-Lx/2) then
-						pos(l,1)=pos(l,1)+Lx
-					end if
-					if (pos(l,2)>Ly/2) then
-						pos(l,2)=pos(l,2)-Ly
-					elseif(pos(l,2)<=-Ly/2) then
-						pos(l,2)=pos(l,2)+Ly
-					end if
+					!periodic condition
+					call period_condition_rij(pos(l,:))
+					!
+					!Jugde whether the particle is close the former paritcle
+					!too much.
 					do n=1,l-1
 						call rij_and_rr(rij,rsqr,n,l)
 						if (rsqr<0.7 .or. pos(l,3)<0.9) then
@@ -316,7 +379,6 @@ subroutine uniform_linear_brushes(l)
 						end if
 					end do
 				end do
-! 				write(*,*) l,k,pos(l,:)
 			end do
 		end if
 	end do
@@ -325,6 +387,18 @@ end subroutine uniform_linear_brushes
 
 
 subroutine initialize_ions
+  !--------------------------------------!
+  !initialize ions
+  !
+  !Input
+  !  pos
+  !Output
+  !  pos
+  !External Variables
+  !  
+  !Routine Referenced:
+  !	 rij_and_rr
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer :: i, j, k, l, m, n, x, y, p
@@ -359,82 +433,127 @@ end subroutine initialize_ions
 
 
 subroutine initialize_velocity
- !-----------------------------------------!
- !input: pos
- !output: pos
- !External variants: R_bond, R_box, Lz, Npe, qq
- !note: the box's radius is (R_rod,R_box) and height is (-Lz/2, Lz/2)
- !-----------------------------------------!
+  !-----------------------------------------!
+  !Initialize velocity by Gauss distribution.
+  !
+  !input:
+  !  vel
+  !output:
+  !  vel
+  !External variants:
+  !  
+  !Routine Referenced:
+  !	 rescale_velocity
+  !-----------------------------------------!
 	use compute_acceleration, only : anchor_list
 	use global_variables
 	implicit none
 	integer i,j,k
 	real*8 rnd
-
-	! generate gauss velocity distribution
-	do i=1, NN
-	  do j=1, 3
+	!
+	!generate gauss velocity distribution
+	do i = 1, NN
+	  do j = 1, 3
 	    call gauss_dist(0.D0,sqrt(1./Beta),rnd)
-	    vel(i,j)=rnd
+	    vel(i,j) = rnd
 	  end do
 	end do
-	do i=1,N_anchor
-		vel(anchor_list(i),:)=0
+	!
+	!the anchored monomer is constrained on the plate.
+	do i = 1, N_anchor
+		vel(anchor_list(i),:) = 0
 	end do
 	call rescale_velocity
 end subroutine initialize_velocity
 
 
 subroutine rescale_velocity
-	!-----------------------------------------!
-	!
-	!-----------------------------------------!
+  !--------------------------------------!
+  !In Langevin dynamics, we needn't to rescale velocity to
+  !achieve equal temperatrue condition.
+  !Here, we rescale velocity to avoid the break of chemical bonds
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !	 Frenkel, Smit, 'Understanding molecular simulation: from
+  !  algorithm to applications', Elsevier, 2002, pp.66
+  !  (Algorithm 4).
+  !--------------------------------------!
 	use compute_acceleration, only : anchor_list
 	use global_variables
 	implicit none
-	real*8 v2_sum     !sum of velocity square
-	integer i,j
+	real*8 :: v2_sum     
+	integer :: i, j
 	real*8, dimension(3) :: v_sum
 	
-	v_sum=0.
-	v2_sum=0.
-	do i=1, NN
-	  do j=1, 3
-	    v_sum(j)=v_sum(j)+vel(i,j)
+	v_sum  = 0.
+	v2_sum = 0.
+	!
+	!average veloctiy
+	do i = 1, NN
+	  do j = 1, 3
+	    v_sum(j) = v_sum(j) + vel(i,j)
 	  end do
 	end do
-	v_sum=v_sum/(NN-N_anchor);
-	do i=1,NN
-	  do j=1,3
-	    vel(i,j)=vel(i,j)-v_sum(j)
+	v_sum = v_sum / (NN-N_anchor);
+	!
+	!average magnitude of velocity
+	do i = 1,NN
+	  do j = 1,3
+	    vel(i,j) = vel(i,j) - v_sum(j)
 	  end do
-		v2_sum=v2_sum+vel(i,1)*vel(i,1)+vel(i,2)*vel(i,2)+vel(i,3)*vel(i,3)
+		v2_sum = v2_sum + vel(i,1)*vel(i,1) + vel(i,2)*vel(i,2) + vel(i,3)*vel(i,3)
 	end do
-	do i=1,N_anchor
-		v2_sum=v2_sum-dot_product(vel(anchor_list(i),:),vel(anchor_list(i),:))
-		vel(anchor_list(i),:)=0
+	!
+	!the anchored monomer is constrained on the plate.
+	do i = 1, N_anchor
+		v2_sum = v2_sum - dot_product(vel(anchor_list(i),:),vel(anchor_list(i),:))
+		vel(anchor_list(i),:) = 0
 	end do
-  ! compute mean square velocity
-  v2_sum=v2_sum/(NN-N_anchor-1)
-  ! rescale_velocity
-	vel=vel*sqrt(3./Beta/v2_sum)
+	!
+  !compute mean square velocity
+  v2_sum = v2_sum / (NN-N_anchor-1)
+  !
+  !rescale_velocity
+	vel = vel * sqrt(3./Beta/v2_sum)
 end subroutine rescale_velocity
 
 
 subroutine new_position
-	!-----------------------------------------!
-	!
-	!-----------------------------------------!
+  !--------------------------------------!
+  !Velocity Verlet algorithm of Langevin dynamics
+  !
+  !
+  !Input
+  !  pos, vel, acc
+  !Output
+  !  pos, vel, acc
+  !External Variables
+  !  dr_max1, dr_max2, xi, NN, dt
+  !Routine Referenced:
+  !1.Tamar Schlick, 'Molecular Modeling and Simulation:
+  !  An Interdisciplinary Guide', 2nd edition, pp.482(14.30),
+  !  Springer, 2010.
+  !2.Gromacs, 'manul 5.0.7', pp.50(3.115-3.119), 2015.
+  !--------------------------------------!
 	use global_variables
-	use compute_acceleration
+	use compute_acceleration, only : dr_max1, dr_max2, xi
 	implicit none
 	real*8, dimension(3) :: dri
-	real*8 dr1,dr2,dmax1,dmax2,eta1,eta2,eta3
+	real*8 dr1,dr2,dmax1,dmax2
 	integer i
-
+	!
+	!move
+	vel=acc*dt/2+(1-xi*dt/2)*vel
+	!
+	!calculate max displacement
 	dmax1=0.
 	dmax2=0.
-	vel=acc*dt/2+(1-xi*dt/2)*vel
 	do i=1,NN
 		dri=vel(i,:)*dt
   	pos(i,1:3)=pos(i,1:3)+dri
@@ -451,36 +570,31 @@ subroutine new_position
 	end do
 	dr_max1=dr_max1+dmax1
 	dr_max2=dr_max2+dmax2
-  call period_condition
+	!
+	!compute force and move
+  call period_condition_pos
   call compute_force
 	vel=(vel+acc*dt/2.)/(1+xi*dt/2.)
-
 end subroutine new_position
 
 
-subroutine gauss_dist(mu, sigma, rnd)
-	!---------------------------------------!
-	!
-	!---------------------------------------!
-	use global_variables
-	implicit none
-	real*8, intent(out) :: rnd
-	real*8, intent(in) :: mu, sigma
-	real*8 rnd1, rnd2
-	
-	call random_number(rnd1)
-	call random_number(rnd2)
-	rnd=sqrt(-2*log(rnd1))*cos(2*pi*rnd2)
-	rnd=mu+rnd*sigma
-end subroutine gauss_dist
-
-
-subroutine period_condition
-	!----------------------------------------!
-	!input: pos
-	!output: pos
-	!External Variables: Lx, Lz, NN, Nrod
-	!----------------------------------------!
+subroutine period_condition_pos
+  !--------------------------------------!
+  !Period_condition of the postion array.
+  !
+  !
+  !Input
+  !  pos
+  !Output
+  !  pos
+  !External Variables
+  !  Lx, Ly, NN
+  !Routine Referenced:
+  !
+  !note:
+  !  the range of the system is
+  !  (-Lx/2, Lx/2)*(-Ly/2, Ly/2)
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer k
@@ -496,47 +610,42 @@ subroutine period_condition
 		elseif(pos(k,2)<=-Ly/2) then
 			pos(k,2)=pos(k,2)+Ly
 		end if
-! 		pos(k,1)=pos(k,1)-floor((pos(k,1)+Lx/2)/Lx)*Lx
-! 		pos(k,2)=pos(k,2)-floor((pos(k,2)+Ly/2)/Ly)*Ly
 	end do
-end subroutine period_condition
+end subroutine period_condition_pos
 
 
-subroutine rij_and_rr(rij, rsqr, i, j)
-  !-----------------------------------------!
-  !compute displacement vector and displacement of two particles
-  !input:
-  !  post(pos or pos1), i, j(particle number) 
-  !output:
-  !  rij(displacement vecter), rr(square of displacement)
-  !External Variant:
-  !  Lz(used in period condition)
+subroutine period_condition_rij(rij)
+  !--------------------------------------!
+  !Period_condition of the postion array.
+  !
+  !
+  !Input
+  !  pos
+  !Output
+  !  pos
+  !External Variables
+  !  Lx, Ly, NN
+  !Routine Referenced:
+  !
   !note:
-  !  including period condition
-  !-----------------------------------------!
-  use global_variables
-  implicit none
-  real*8, dimension(3), intent(out) :: rij
-  real*8, intent(out) :: rsqr
-  integer, intent(in) :: i
-  integer, intent(in) :: j
-
-  rij = pos(i,1:3) - pos(j,1:3)
-
-  if ( rij(1) > Lx/2 ) then
-    rij(1) = rij(1) - Lx
-  elseif( rij(1) <= -Lx/2 ) then
-    rij(1) = rij(1) + Lx
-  end if
-  if ( rij(2) > Ly/2 ) then
-    rij(2) = rij(2) - Ly
-  elseif( rij(2) <= -Ly/2 ) then
-    rij(2) = rij(2) + Ly
-  end if
-
-  rsqr = rij(1)*rij(1) + rij(2)*rij(2) + rij(3)*rij(3)
-
-end subroutine rij_and_rr
+  !  the range of the system is
+  !  (-Lx/2, Lx/2)*(-Ly/2, Ly/2)
+  !--------------------------------------!
+	use global_variables
+	implicit none
+	real*8, intent(inout) :: rij(3)
+	
+	if ( rij(1) > Lx/2 ) then
+		rij(1) = rij(1) - Lx
+	elseif( pos(1) <= -Lx/2 ) then
+		rij(1) = rij(1) + Lx
+	end if
+	if ( rij(2) > Ly/2 ) then
+		rij(2) = rij(2) - Ly
+	elseif( pos(2) <= -Ly/2 ) then
+		rij(2) = rij(2) + Ly
+	end if
+end subroutine period_condition_rij
 
 
 end module initialize_update

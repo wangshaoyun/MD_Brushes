@@ -93,6 +93,18 @@ save
 contains
 
 subroutine initialize_parameters
+  !--------------------------------------!
+  !Initialize system parameters
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	implicit none
 
 	call read_data
@@ -106,7 +118,19 @@ subroutine initialize_parameters
 end subroutine initialize_parameters
 
 
-subroutine read_data	
+subroutine read_data
+	!--------------------------------------!
+  !read system parameters
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	logical alive
@@ -127,7 +151,9 @@ subroutine read_data
 		read(10,*) man
 		read(10,*) StepNum0 					
 		read(10,*) StepNum						
-		read(10,*) DeltaStep 		
+		read(10,*) DeltaStep1
+		read(10,*) DeltaStep2 		
+		read(10,*) DeltaStep3 				
 		read(10,*) multistep	
 		read(10,*) dt
 	close(10)
@@ -135,6 +161,19 @@ end subroutine read_data
 
 
 subroutine data_operation
+	!--------------------------------------!
+  !Initialize system parameters
+  !and judge whether restarted or continue
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	logical alive
@@ -143,165 +182,187 @@ subroutine data_operation
 	Ntl = Nml * Ngl
 	Npe = Nta + Ntl
 	N_anchor = Nga + Ngl
-	if ( man/=0 )	then
+	if ( man /= 0 )	then
 		!the anchor monomer is uncharged and the branching point is charged
-		NN=Npe+(Npe-N_anchor)/man*nint(abs(qq))	
+		NN = Npe + (Npe-N_anchor)/man * nint(abs(qq))	
 	else
-		NN=Npe
+		NN = Npe
 	end if 
-	if (abs(qq)==0) then
-		Nq=0
+	if ( abs(qq) == 0 ) then
+		Nq = 0
 	else
-		Nq=(Npe-N_anchor)/man*(nint(abs(qq))+1)
+		Nq = (Npe-N_anchor)/man * (nint(abs(qq))+1)
 	end if
 	
-	Lx=sqrt(N_anchor/sigmag)
-	Ly=Lx
-	Z_empty=(Lz+Lx*Z_empty)/Lz
+	Lx = sqrt(N_anchor/sigmag)
+	Ly = Lx
+	Z_empty = (Lz+Lx*Z_empty)/Lz
 	!
 	!whether continue or restart
-	Inquire(file='start_time.txt',exist=alive)
+	Inquire( file='start_time.txt', exist=alive )
 	if (alive) then
 		open(11,file='./start_time.txt')
 			read(11,*) restart_or_continue
 		close(11)
 	else
-		restart_or_continue=0
+		restart_or_continue = 0
 	end if
 end subroutine data_operation
 
 
 subroutine data_allocate
-	!----------------------------------------!
-	!allocate array and initialize them
-	!----------------------------------------!
+  !--------------------------------------!
+  !Allocate pos, vel, acc and histogram arrays
+  !Initialize histogram arrays
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	!
 	!position, velocity, and acceleration
-	allocate(pos(NN,4))
-	allocate(vel(NN,3))
-	allocate(acc(NN,3))
-	pos=0
-	vel=0
-	acc=0
+	allocate( pos(NN,4) )
+	allocate( vel(NN,3) )
+	allocate( acc(NN,3) )
+	pos = 0
+	vel = 0
+	acc = 0
 	!
 	!Histogram
-	allocate(phi_tot(SizeHist,2))
-	allocate(phi_l(SizeHist,2))
-	allocate(phi_le(SizeHist,2))
-	allocate(phi_s(SizeHist,2))
-	allocate(phi_sb(SizeHist,2))
-	allocate(phi_se(SizeHist,2))
-	allocate(phi_a(SizeHist,2))
-	allocate(phi_i(SizeHist,2))
-	allocate(phi_q(SizeHist,2))
-	allocate(delta_angle1(SizeHist,2))
-	allocate(delta_angle2(SizeHist,2))
-	allocate(delta_angle3(SizeHist,2))
-	allocate(theta_l(SizeHist,2))
-	allocate(theta_lz(SizeHist,2))
-	allocate(theta_ssl(SizeHist,2))
-	allocate(theta_sslz(SizeHist,2))
-	allocate(theta_sbl(SizeHist,2))
-	allocate(theta_sblz(SizeHist,2))
-	allocate(theta_bez(SizeHist,2))
-	allocate(force_l(Nml-1,2))
-	allocate(force_sy(Nma*2,2))
-	allocate(force_sn(Nma*2,2))
-	allocate(force_so(Nma*2,2))
-	allocate(force_l1(SizeHist,2))
-	allocate(force_sy1(SizeHist,2))
-	allocate(force_sn1(SizeHist,2))
-	allocate(force_so1(SizeHist,2))
-	allocate(phi_zx(SizeHist,SizeHist))
-	allocate(phi_xy(SizeHist,SizeHist))
-	allocate(phi_yz(SizeHist,SizeHist))
-	allocate(phi_lzx(SizeHist,SizeHist))
-	allocate(phi_lxy(SizeHist,SizeHist))
-	allocate(phi_lyz(SizeHist,SizeHist))
-	allocate(phi_lezx(SizeHist,SizeHist))
-	allocate(phi_lexy(SizeHist,SizeHist))
-	allocate(phi_leyz(SizeHist,SizeHist))
-	allocate(phi_szx(SizeHist,SizeHist))
-	allocate(phi_sxy(SizeHist,SizeHist))
-	allocate(phi_syz(SizeHist,SizeHist))
-	allocate(phi_sbzx(SizeHist,SizeHist))
-	allocate(phi_sbxy(SizeHist,SizeHist))
-	allocate(phi_sbyz(SizeHist,SizeHist))
-	allocate(phi_sezx(SizeHist,SizeHist))
-	allocate(phi_sexy(SizeHist,SizeHist))
-	allocate(phi_seyz(SizeHist,SizeHist))
-	allocate(phi_azx(SizeHist,SizeHist))
-	allocate(phi_axy(SizeHist,SizeHist))
-	allocate(phi_ayz(SizeHist,SizeHist))
-	allocate(phi_izx(SizeHist,SizeHist))
-	allocate(phi_ixy(SizeHist,SizeHist))
-	allocate(phi_iyz(SizeHist,SizeHist))
-	allocate(phi_qzx(SizeHist,SizeHist))
-	allocate(phi_qxy(SizeHist,SizeHist))
-	allocate(phi_qyz(SizeHist,SizeHist))
+	allocate( phi_tot(SizeHist,2)         )
+	allocate( phi_l(SizeHist,2)           )
+	allocate( phi_le(SizeHist,2)          )
+	allocate( phi_s(SizeHist,2)           )
+	allocate( phi_sb(SizeHist,2)          )
+	allocate( phi_se(SizeHist,2)          )
+	allocate( phi_a(SizeHist,2)           )
+	allocate( phi_i(SizeHist,2)           )
+	allocate( phi_q(SizeHist,2)           )
+	allocate( delta_angle1(SizeHist,2)    )
+	allocate( delta_angle2(SizeHist,2)    )
+	allocate( delta_angle3(SizeHist,2)    )
+	allocate( theta_l(SizeHist,2)         )
+	allocate( theta_lz(SizeHist,2)        )
+	allocate( theta_ssl(SizeHist,2)       )
+	allocate( theta_sslz(SizeHist,2)      )
+	allocate( theta_sbl(SizeHist,2)       )
+	allocate( theta_sblz(SizeHist,2)      )
+	allocate( theta_bez(SizeHist,2)       )
+	allocate( force_l(Nml-1,2)        	  )
+	allocate( force_sy(Nma*2,2)           )
+	allocate( force_sn(Nma*2,2)           )
+	allocate( force_so(Nma*2,2)           )
+	allocate( force_l1(SizeHist,2)        )
+	allocate( force_sy1(SizeHist,2)       )
+	allocate( force_sn1(SizeHist,2)       )
+	allocate( force_so1(SizeHist,2)       )
+	allocate( phi_zx(SizeHist,SizeHist)   )
+	allocate( phi_xy(SizeHist,SizeHist)   )
+	allocate( phi_yz(SizeHist,SizeHist)   )
+	allocate( phi_lzx(SizeHist,SizeHist)  )
+	allocate( phi_lxy(SizeHist,SizeHist)  )
+	allocate( phi_lyz(SizeHist,SizeHist)  )
+	allocate( phi_lezx(SizeHist,SizeHist) )
+	allocate( phi_lexy(SizeHist,SizeHist) )
+	allocate( phi_leyz(SizeHist,SizeHist) )
+	allocate( phi_szx(SizeHist,SizeHist)  )
+	allocate( phi_sxy(SizeHist,SizeHist)  )
+	allocate( phi_syz(SizeHist,SizeHist)  )
+	allocate( phi_sbzx(SizeHist,SizeHist) )
+	allocate( phi_sbxy(SizeHist,SizeHist) )
+	allocate( phi_sbyz(SizeHist,SizeHist) )
+	allocate( phi_sezx(SizeHist,SizeHist) )
+	allocate( phi_sexy(SizeHist,SizeHist) )
+	allocate( phi_seyz(SizeHist,SizeHist) )
+	allocate( phi_azx(SizeHist,SizeHist)  )
+	allocate( phi_axy(SizeHist,SizeHist)  )
+	allocate( phi_ayz(SizeHist,SizeHist)  )
+	allocate( phi_izx(SizeHist,SizeHist)  )
+	allocate( phi_ixy(SizeHist,SizeHist)  )
+	allocate( phi_iyz(SizeHist,SizeHist)  )
+	allocate( phi_qzx(SizeHist,SizeHist)  )
+	allocate( phi_qxy(SizeHist,SizeHist)  )
+	allocate( phi_qyz(SizeHist,SizeHist)  )
 	!initialize histogram
-	phi_tot=0
-	phi_l=0
-	phi_le=0
-	phi_s=0
-	phi_sb=0
-	phi_se=0
-	phi_a=0
-	phi_i=0
-	phi_q=0
-	delta_angle1=0
-	delta_angle2=0
-	delta_angle3=0
-	theta_l=0
-	theta_lz=0
-	theta_ssl=0
-	theta_sslz=0
-	theta_sbl=0
-	theta_sblz=0
-	theta_bez=0
-	force_l=0
-	force_sy=0
-	force_sn=0
-	force_so=0
-	force_l1=0
-	force_sy1=0
-	force_sn1=0
-	force_so1=0
-	phi_zx=0
-	phi_xy=0
-	phi_yz=0
-	phi_lzx=0
-	phi_lxy=0
-	phi_lyz=0
-	phi_lezx=0
-	phi_lexy=0
-	phi_leyz=0
-	phi_szx=0
-	phi_sxy=0
-	phi_syz=0
-	phi_sbzx=0
-	phi_sbxy=0
-	phi_sbyz=0
-	phi_sezx=0
-	phi_sexy=0
-	phi_seyz=0
-	phi_azx=0
-	phi_axy=0
-	phi_ayz=0
-	phi_izx=0
-	phi_ixy=0
-	phi_iyz=0
-	phi_qzx=0
-	phi_qxy=0
-	phi_qyz=0
+	phi_tot      = 0
+	phi_l        = 0
+	phi_le       = 0
+	phi_s        = 0
+	phi_sb       = 0
+	phi_se       = 0
+	phi_a        = 0
+	phi_i        = 0
+	phi_q        = 0
+	delta_angle1 = 0
+	delta_angle2 = 0
+	delta_angle3 = 0
+	theta_l      = 0
+	theta_lz     = 0
+	theta_ssl    = 0
+	theta_sslz   = 0
+	theta_sbl    = 0
+	theta_sblz   = 0
+	theta_bez    = 0
+	force_l      = 0
+	force_sy     = 0
+	force_sn     = 0
+	force_so     = 0
+	force_l1     = 0
+	force_sy1    = 0
+	force_sn1    = 0
+	force_so1    = 0
+	phi_zx       = 0
+	phi_xy       = 0
+	phi_yz       = 0
+	phi_lzx      = 0
+	phi_lxy      = 0
+	phi_lyz      = 0
+	phi_lezx     = 0
+	phi_lexy     = 0
+	phi_leyz     = 0
+	phi_szx      = 0
+	phi_sxy      = 0
+	phi_syz      = 0
+	phi_sbzx     = 0
+	phi_sbxy     = 0
+	phi_sbyz     = 0
+	phi_sezx     = 0
+	phi_sexy     = 0
+	phi_seyz     = 0
+	phi_azx      = 0
+	phi_axy      = 0
+	phi_ayz      = 0
+	phi_izx      = 0
+	phi_ixy      = 0
+	phi_iyz      = 0
+	phi_qzx      = 0
+	phi_qxy      = 0
+	phi_qyz      = 0
 	
-	h_avg=0
+	h_avg        = 0
 end subroutine data_allocate
 
 
 subroutine write_system_parameters
+  !--------------------------------------!
+  !Write system parameters to screen.
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 use global_variables
 implicit none
 	!
@@ -321,45 +382,61 @@ implicit none
   write(*,*) '****************************************************'
 	
 	write(*,*) '******************running_steps*********************'
-  write(*,*) 'Preheating steps             :', StepNum0*DeltaStep
-  write(*,*) 'Running steps                :', StepNum*DeltaStep
-  write(*,*) 'Total steps                  :', (StepNum0+StepNum)*DeltaStep
-  write(*,*) 'Steps between two statistics :', DeltaStep
-  write(*,*) 'Multisteps of coulomb energy :', MultiStep
-  write(*,*) 'Distance of each move        :', dt
+  write(*,*) 'Preheating steps            StepNum0:', StepNum0
+  write(*,*) 'Running steps                StepNum:', StepNum
+  write(*,*) 'Total steps       	StepNum0+StepNum:', (StepNum0+StepNum)
+  write(*,*) 'Step inteval              DeltaStep1:', DeltaStep1
+  write(*,*) 'Step inteval              DeltaStep2:', DeltaStep2
+  write(*,*) 'Step inteval	            DeltaStep3:', DeltaStep3
+  write(*,*) 'Multisteps of coulomb      MultiStep:', MultiStep
+  write(*,*) 'Distance of each move             dt:', dt
   write(*,*) '****************************************************'
 
 end subroutine write_system_parameters
 
 
 subroutine continue_read_data(l)
-	!----------------------------------------!
-	!write position to pos.txt
-	!input: pos
-	!External Variants: NN
-	!----------------------------------------!
+  !--------------------------------------!
+  !When the program is break off due to power off,
+  !we need to continue the program from the former data.
+  !This subroutine is used to read data from file to continue
+  !calculating.
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	integer, intent(out) :: l
 	integer :: i,j
-	real*8, dimension(SizeHist,10):: phi
-	real*8, dimension(SizeHist,8):: theta
-	real*8, dimension(2*Nma,4):: force
-	real*8, dimension(SizeHist,4):: force1
-	real*8, dimension(SizeHist,4):: delta_angle
-	
+	real*8, dimension(SizeHist,10) :: phi
+	real*8, dimension(SizeHist,8)  :: theta
+	real*8, dimension(2*Nma,4)     :: force
+	real*8, dimension(SizeHist,4)  :: force1
+	real*8, dimension(SizeHist,4)  :: delta_angle
+	!
+	!read pos and vel
 	open(20,file='./data/pos1.txt')
 	open(21,file='./data/vel1.txt')
 		read(20,*) ((pos(i,j),j=1,4),i=1,NN)
 		read(21,*) ((vel(i,j),j=1,3),i=1,NN)
 	close(20)
 	close(21)
+	!
+	!read steps and total_time of the former calculation.
 	open(19,file='./start_time.txt')
 		read(19,*)
 		read(19,*) l
 		read(19,*) total_time
 		l=l+1
 	close(19)
-	
+	!
+	!read physical quantities
 	phi=0
 	theta=0
 	force=0
@@ -410,6 +487,8 @@ subroutine continue_read_data(l)
 	close(22)
 	close(21)
 	close(20)
+  !
+  !read histogram
 	open(21,file='./data/phi_2d11.txt')
 	open(22,file='./data/phi_2d12.txt')
 	open(23,file='./data/phi_2d13.txt')
@@ -495,9 +574,18 @@ end subroutine continue_read_data
 
 
 subroutine height
-	!----------------------------------------!
-	!
-	!----------------------------------------!
+  !--------------------------------------!
+  !Initialize system parameters
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	use compute_acceleration
 	implicit none
@@ -839,9 +927,19 @@ end subroutine height
 
 
 subroutine write_height(j)
-	!----------------------------------------!
-	!
-	!----------------------------------------!
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer, intent(in) :: j
@@ -868,11 +966,19 @@ end subroutine write_height
 
 
 subroutine histogram
-	!----------------------------------------!
-	!input: pos
-	!output: hist1(distribution hisotgram from PE to rod)
-	!External Variants: Npe
-	!----------------------------------------!
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	use compute_acceleration
 	implicit none
@@ -1089,11 +1195,19 @@ end subroutine histogram
 
 
 subroutine write_hist
-	!----------------------------------------!
-	!write distribution histogram to the file hist1.txt ... hist4.txt
-	!input: hist1, hist2, hist3, hist4
-	!External Variants: SizeHist, LengthHist1...LengthHist4
-	!----------------------------------------!
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer i,j
@@ -1239,11 +1353,19 @@ end subroutine write_hist
 
 
 subroutine write_pos
-	!----------------------------------------!
-	!write position to pos.txt
-	!input: pos
-	!External Variants: NN
-	!----------------------------------------!
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer :: i
@@ -1258,11 +1380,19 @@ end subroutine write_pos
 
 
 subroutine write_pos1
-	!----------------------------------------!
-	!write the step j and pos to the file pos1.txt
-	!input: j, pos
-	!External Variants: NN
-	!----------------------------------------!
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer :: i
@@ -1277,11 +1407,19 @@ end subroutine write_pos1
 
 
 subroutine write_vel
-	!----------------------------------------!
-	!write position to pos.txt
-	!input: pos
-	!External Variants: NN
-	!----------------------------------------!
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer :: i
@@ -1292,15 +1430,24 @@ subroutine write_vel
 			320 format(3F17.6)
 		end do
 	close(32)
+
 end subroutine write_vel
 
 
 subroutine write_vel1(j)
-	!----------------------------------------!
-	!write position to pos.txt
-	!input: pos
-	!External Variants: NN
-	!----------------------------------------!
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer :: i
@@ -1312,6 +1459,7 @@ subroutine write_vel1(j)
 			330 format(3F17.6)
 		end do
 	close(33)
+
 	open(32,file='./start_time.txt')
 		write(32,*) 1
 		write(32,*) j
@@ -1323,15 +1471,24 @@ subroutine write_vel1(j)
 		write(32,*) 'time:(hours)', real(total_time/3600)
 		write(32,*) 'time:(days)', real(total_time/86400)
 	close(32)
+
 end subroutine write_vel1
 
 
 subroutine write_acc
-	!----------------------------------------!
-	!write position to pos.txt
-	!input: pos
-	!External Variants: NN
-	!----------------------------------------!
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	integer :: i
@@ -1342,64 +1499,43 @@ subroutine write_acc
 			370 format(3F17.6)
 		end do
 	close(37)
+
 end subroutine write_acc
 
 
 subroutine write_time(time)
+  !--------------------------------------!
+  !
+  !
+  !
+  !Input
+  !  
+  !Output
+  !   
+  !External Variables
+  !  
+  !Routine Referenced:
+  !
+  !--------------------------------------!
 	use global_variables
 	implicit none
 	real*8, intent(in) :: time
+
 	open(10,file='./data/time.txt')
-	write(10,*) 'time:(seconds)', real(total_time)
-	write(10,*) 'time:(minutes)', real(total_time/60)
-	write(10,*) 'time:(hours)', real(total_time/3600)
-	write(10,*) 'time:(days)', real(total_time/86400)
-	write(10,*) 'Lx:', real(Lx)
-	write(10,*) 'Ly:', real(Ly)
-	write(10,*) 'Lz:', real(Lz)
-	write(10,*) 'Nq:', Nq
-	write(10,*) 'NN:', NN
-	write(10,*) 'sigmag:', real(sigmag)
-	write(10,*) 'qq:',nint(qq)
+		write(10,*) 'time:(seconds)', real(total_time)
+		write(10,*) 'time:(minutes)', real(total_time/60)
+		write(10,*) 'time:(hours)  ', real(total_time/3600)
+		write(10,*) 'time:(days)   ', real(total_time/86400)
+		write(10,*) 'Lx:           ', real(Lx)
+		write(10,*) 'Ly:           ', real(Ly)
+		write(10,*) 'Lz:           ', real(Lz)
+		write(10,*) 'Nq:           ', Nq
+		write(10,*) 'NN:           ', NN
+		write(10,*) 'sigmag:       ', real(sigmag)
+		write(10,*) 'qq:           ',nint(qq)
 	close(10)
+
 end subroutine write_time
-
-
-subroutine rij_and_rr(rij, rsqr, i, j)
-  !-----------------------------------------!
-  !compute displacement vector and displacement of two particles
-  !input:
-  !  post(pos or pos1), i, j(particle number) 
-  !output:
-  !  rij(displacement vecter), rr(square of displacement)
-  !External Variant:
-  !  Lz(used in period condition)
-  !note:
-  !  including period condition
-  !-----------------------------------------!
-  use global_variables
-  implicit none
-  real*8, dimension(3), intent(out) :: rij
-  real*8, intent(out) :: rsqr
-  integer, intent(in) :: i
-  integer, intent(in) :: j
-
-  rij = pos(i,1:3) - pos(j,1:3)
-
-  if ( rij(1) > Lx/2 ) then
-    rij(1) = rij(1) - Lx
-  elseif( rij(1) <= -Lx/2 ) then
-    rij(1) = rij(1) + Lx
-  end if
-  if ( rij(2) > Ly/2 ) then
-    rij(2) = rij(2) - Ly
-  elseif( rij(2) <= -Ly/2 ) then
-    rij(2) = rij(2) + Ly
-  end if
-
-  rsqr = rij(1)*rij(1) + rij(2)*rij(2) + rij(3)*rij(3)
-
-end subroutine rij_and_rr
 
 
 end module input_output
