@@ -2,6 +2,10 @@ module input_output
 implicit none 
 
 save
+  !ZhangFen
+  real*8,  allocatable, dimension(:,:), private :: phi_branch
+  real*8,  allocatable, dimension(:,:), private :: alpha_stem
+  real*8,  allocatable, dimension(:,:), private :: alpha_branch
   !Histogram
   real*8,  allocatable, dimension(:,:), private :: phi_tot
   real*8,  allocatable, dimension(:,:), private :: phi_l
@@ -89,6 +93,11 @@ save
   real*8, private :: ratio_stretch
   real*8, private :: ratio_collapse
   real*8, private :: ratio_other
+  !Zhang Fen
+  real*8, private :: R_up
+  real*8, private :: R_down
+  real*8, private :: R_I
+  real*8, dimension(10), private :: capital_xi
 
 contains
 
@@ -269,6 +278,11 @@ subroutine data_allocate
   pos = 0
   vel = 0
   acc = 0
+  !
+  !ZhangFen
+  allocate( phi_branch(SizeHist,2)      )
+  allocate( alpha_stem(SizeHist,2)      )
+  allocate( alpha_branch(SizeHist,2)    )
   !
   !Histogram
   allocate( phi_tot(SizeHist,2)         )
@@ -454,6 +468,7 @@ subroutine continue_read_data(l)
   use global_variables
   integer, intent(out) :: l
   integer :: i,j
+  real*8, dimension(SizeHist,6)  :: alpha_phi
   real*8, dimension(SizeHist,10) :: phi
   real*8, dimension(SizeHist,8)  :: theta
   real*8, dimension(2*Nma,4)     :: force
@@ -481,6 +496,7 @@ subroutine continue_read_data(l)
   theta=0
   force=0
   delta_angle=0
+  open(19,file='./data/alpha_phi.txt')
   open(20,file='./data/phi.txt')
   open(21,file='./data/theta.txt')
   open(22,file='./data/force_liear.txt')
@@ -488,6 +504,10 @@ subroutine continue_read_data(l)
   open(24,file='./data/delta_angle.txt')
   open(25,file='./data/force_liear1.txt')
   open(26,file='./data/force_star1.txt')
+    read(19,*) ((alpha_phi(i,j),j=1,6),i=1,SizeHist)
+      phi_branch(:,2) = alpha_phi(:,2)
+      alpha_stem(:,2) = alpha_phi(:,4)
+      alpha_branch(:,2) = alpha_phi(:,6)
     read(20,*) ((phi(i,j),j=1,10),i=1,SizeHist)
       phi_tot(:,2)=phi(:,2)
       phi_l(:,2)=phi(:,3)
@@ -527,6 +547,7 @@ subroutine continue_read_data(l)
   close(22)
   close(21)
   close(20)
+  close(19)
   !
   !read histogram
   open(21,file='./data/phi_2d11.txt')
@@ -631,9 +652,59 @@ subroutine height
   implicit none
   integer i,j,k,l,m,n,p,q,r,s,num_stretch,num_collapse
   real*8 :: rr,rsqr,rr1,rr2,rr3,maxh,Rg1,Rg1z,Rg2,Rg2z
-  real*8 :: max_hs_end,min_hs_end,hs_avg_arm
+  real*8 :: max_hs_end,min_hs_end,hs_avg_arm,max_hs,min_hs
   real*8, dimension(3) :: rij
   real*8, dimension(3) :: rij1,rij2,rij3,f1
+  real*8 :: h1, h2, h3, h4
+
+
+  !------------ZhangFen------------!
+  R_up = 0
+  R_down = 0
+  R_I = 0
+  capital_xi = 0
+  n = arm * Nma + 1 
+  do i = 1, Nga
+    hs_avg = 0
+    do j = 1, n
+      hs_avg = hs_avg + pos( (i-1) * n + j, 3 )
+    end do
+    hs_avg = hs_avg / n
+    max_hs = 0
+    min_hs = Lz
+    do j = 1, Nma
+      h1 = pos( (i-1) * n + Nma + j + 1, 3 )
+      h2 = pos( (i-1) * n + Nma*2 + j + 1, 3 )
+      h3 = maxval((/h1,h2/))
+      h4 = minval((/h1,h2/))
+      if ( max_hs < h3 ) then
+        max_hs = h3
+      end if
+      if ( min_hs > h4 ) then
+        min_hs = h4
+      end if
+    end do
+    if (min_hs > hs_avg) then
+      R_up = R_up + 1
+    elseif (max_hs < hs_avg) then
+      R_down = R_down + 1
+    else
+      R_I = R_I + 1
+    end if
+  end do
+  R_up = R_up / Nga
+  R_down = R_down / Nga
+  R_I = R_I / Nga
+
+  do i = Npe+1, NN
+    do j = 1, size(capital_xi)
+      if ( pos(i,3) < 5+j ) then
+        capital_xi(j) = capital_xi(j) + 1
+      end if
+    end do
+  end do
+  capital_xi = capital_xi / ( NN-Npe )
+  !--------------------------------!
 
   h_avg=0
   hl_avg=0
@@ -983,7 +1054,11 @@ subroutine write_height(j)
   use global_variables
   implicit none
   integer, intent(in) :: j
-  
+
+  open(35,position='append', file='./data/up_and_down.txt')
+    write(35,350) 1.*j, R_up, R_down, R_I, capital_xi
+  close(35)
+  350 format(14F15.6)
 !     open(36,position='append', file='./data/height.txt')
 !       write(36,361) 1.*j, h_avg
 !     close(36)
@@ -1026,6 +1101,48 @@ subroutine histogram
   real*8, dimension(3) :: rij1,rij2,rij3,f1
   real*8 rsqr,theta,rr1,rr2,rr3,he_min,he_max,hb
   
+
+  !---------------ZhangFen-------------!
+  do i = 1, Npe
+    if ( pos(i,4) /= 0 ) then
+      k = ceiling( pos(i,3) / (Lz/SizeHist) )
+      if ( k == 0 ) cycle
+      if (k<0 .or. k>SizeHist) then
+        write(*,*) 'Wrong in phi_tot: k<0 or k>SizeHist!'
+        cycle
+      end if
+      phi_branch(k,2) = phi_branch(k,2) + 1 
+    end if
+  end do
+  n = arm * Nma + 1
+  do i = 1, Nga
+    j = (i-1) * n + 1
+    k = (i-1) * n + Nma + 1
+    l = (i-1) * n + Nma*2 + 1
+    m = i * n
+
+    call rij_and_rr(rij1, rr1, j, k)
+    x = ceiling( asin( rij1(3) / sqrt(rr1) ) / (pi/2/SizeHist) )
+    if ( x == 0 ) cycle
+    if (x<0 .or. x>SizeHist) then
+      write(*,*) 'Wrong in phi_tot: x<0 or x>SizeHist!'
+      cycle
+    end if
+    alpha_stem(x,2) = alpha_stem(x,2) + 1 
+
+    call rij_and_rr(rij1, rr1, l, m)
+    call rij_and_rr(rij2, rr2, k, l)
+    call rij_and_rr(rij3, rr3, k, m)
+    x = ceiling( acos( (rr2+rr3-rr1)/sqrt(rr2*rr3)/2 ) / (pi/SizeHist) )
+    if ( x == 0 ) cycle
+    if (x<0 .or. x>SizeHist) then
+      write(*,*) 'Wrong in phi_tot: x<0 or x>SizeHist!'
+      cycle
+    end if
+    alpha_branch(x,2) = alpha_branch(x,2) + 1 
+
+  end do
+  !------------------------------------!
   
   !!!!!!!!!!!!!!!!!!!!!!!!1d_height_distribution!!!!!!!!!!!!!!!!!!!!!
   !!-------------------phi_tot-----------------!
@@ -1244,14 +1361,27 @@ subroutine write_hist
   !Output
   !   
   !External Variables
-  !  
+  !
   !Routine Referenced:
   !
-  !--------------------------------------!
+  !------------------------------------!
   use global_variables
   implicit none
   integer i,j
-  
+
+  !--------------ZhangFen--------------!
+  open(30,file='./data/alpha_phi.txt')
+    do i = 1, SizeHist
+      phi_branch(i,1) = i*Lz/SizeHist
+      alpha_stem(i,1) = i*90./SizeHist
+      alpha_branch(i,1) = i*180./SizeHist
+      write(30,300) phi_branch(i,1), phi_branch(i,2),   alpha_stem(i,1),  &
+                    alpha_stem(i,2), alpha_branch(i,1), alpha_branch(i,2) 
+    end do
+  close(30)
+  300 format(6F17.6)
+  !------------------------------------!
+
   open(31,file='./data/phi.txt')
     do i=1,SizeHist
       phi_tot(i,1)=i*Lz/SizeHist
