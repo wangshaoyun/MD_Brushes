@@ -142,7 +142,9 @@ subroutine read_data
     read(10,*) Z_empty  
     read(10,*) sigmag   
     read(10,*) Beta       
-    read(10,*) qq         
+    read(10,*) qq
+    read(10,*) qqi
+    read(10,*) ion_ratio       
     read(10,*) arm
     read(10,*) Nma
     read(10,*) Nga
@@ -178,26 +180,58 @@ subroutine data_operation
   use global_variables
   implicit none
   logical alive
-
-  Nta = ( Nma*arm+1 ) * Nga
+  integer :: i
+  integer :: arm_q          !Charged arms of star brushes
+  integer :: Nq_PE          !Charged monomers of PE
+  integer :: Charge_ions    !电量而不是粒子数
+  !
+  !the situation of the arm whether is charge or not
+  allocate(charged_arm(arm))
+  open( 100, file='q_arm.txt' )
+    do i = 1, arm
+      read( 100, * ) charged_arm(i) 
+    end do
+  close( 100 )
+  !
+  !The total arms that are charged
+  arm_q = sum(charged_arm)
+  !
+  !The total monomers of star brushes
+  Nta = ( Nma*arm + 1 ) * Nga
+  !
+  !The total monomers of linear brushes
   Ntl = Nml * Ngl
+  !
+  !The total monomers of star and linear brushes
   Npe = Nta + Ntl
+  !
+  !The total chains that are anchored on the plate
   N_anchor = Nga + Ngl
-  if ( man /= 0 ) then
-    !the anchor monomer is uncharged and the branching point is charged
-    NN = Npe + (Npe-N_anchor)/man * nint(abs(qq)) 
-  else
-    NN = Npe
-  end if 
+  !
+  !The total particles NN and total particles that are
+  !charged Nq in the system
   if ( abs(qq) == 0 ) then
-    Nq = 0
+    Nq_PE = 0
   else
-    Nq = (Npe-N_anchor)/man * (nint(abs(qq))+1)
+    if ( man /= 0 ) then
+      Nq_PE = (Ntl - Ngl + arm_q * Nma * Nga) / man
+    else
+      Nq_PE = 0
+    end if
   end if
-  
-  Lx = sqrt(N_anchor/sigmag)
+  if ( abs(qqi) == 0 ) then
+    Nq_salt_ions = 0
+  else
+    Charge_ions = nint( ion_ratio * Nq_PE * nint(abs(qq)) )
+    Nq_salt_ions = Charge_ions / nint(abs(qqi))
+  end if
+  Nq = Nq_PE * ( nint(abs(qq))+1 ) + Nq_salt_ions * ( nint(abs(qqi)) + 1 )
+  NN = Npe + Nq_PE * nint(abs(qq)) + Nq_salt_ions * ( nint(abs(qqi)) + 1 )
+  !
+  !System size
+  Lx = sqrt( N_anchor / sigmag )
   Ly = Lx
-  Z_empty = (Lz+Lx*Z_empty)/Lz
+  Z_empty = ( Lz + Lx * Z_empty ) / Lz
   !
   !whether continue or restart
   Inquire( file='start_time.txt', exist=alive )

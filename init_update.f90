@@ -34,12 +34,12 @@ subroutine Initialize_position
   l=0
   !
   !Graft star and linear brushes
-  if ( uniform_or_random == 1) then
+  if ( uniform_or_random == 0 ) then
+    call uniform_linear_brushes(l)
+    call uniform_star_brushes(l)
+  else
     call random_star_brushes(l)
     call random_linear_brushes(l)
-  else 
-    call uniform_star_brushes(l)
-    call uniform_linear_brushes(l)
   end if
   call period_condition_pos
   !
@@ -50,7 +50,7 @@ subroutine Initialize_position
   !
   !initialize chargen on PE
   do i=1,Nq/(nint(abs(qq))+1)
-    pos(charge(i),4)=qq                 
+    pos(charge(i),4) = qq                 
   end do
   !
   !initialize lj_verlet_list
@@ -260,63 +260,62 @@ subroutine uniform_star_brushes(l)
   integer, intent(inout) :: l
   real*8 :: theta, rnd1, rnd2, rnd3, rsqr
   real*8, dimension(3) :: rij
-
   l=0
+  !
   !star brushes
   write(*,*) 'initialize uniform star brushes'
   do i=1, N_anchor
-    x=(i-1)/nint(sqrt(N_anchor*1.))+1           !the root of N_anchor must be integer
+    if ( Nga == 0 ) cycle
+    x=(i-1)/nint(sqrt(N_anchor*1.))+1    !the root of N_anchor must be integer
     y=mod(i-1,nint(sqrt(N_anchor*1.)))+1
-    if (mod(x+y,2)==0) then
-      m=1
-      l=l+1
-      do while (m==1)     !anchor point
-        m=0
-        pos(l,1)=Lx/nint(sqrt(N_anchor*1.))*(x-0.5)-Lx/2
-        pos(l,2)=Ly/nint(sqrt(N_anchor*1.))*(y-0.5)-Ly/2
-        pos(l,3)=0
-      end do
-      do j=1, arm
-        do k=1, Nma
-          l=l+1
-          m=1
-          p=0
-          do while (m/=0)
-            m=0
-            call random_number(rnd1)
-            call random_number(rnd2)
-            if (k==1 .and. j/=1) then   !branching point
-              pos(l,1)=pos(l-(j-2)*Nma-1,1)+R_bond*cos(2*pi*rnd2)*sin(pi*rnd1)
-              pos(l,2)=pos(l-(j-2)*Nma-1,2)+R_bond*sin(2*pi*rnd2)*sin(pi*rnd1)
-              pos(l,3)=pos(l-(j-2)*Nma-1,3)+R_bond*cos(pi*rnd1)
-            else
-              if(p<10) then
-                rnd1=rnd1/1000
-              end if
-              pos(l,1)=pos(l-1,1)+R_bond*sin(pi*rnd1)*cos(2*pi*rnd2)
-              pos(l,2)=pos(l-1,2)+R_bond*sin(pi*rnd1)*sin(2*pi*rnd2)
-              pos(l,3)=pos(l-1,3)+R_bond*cos(pi*rnd1)
+    if (Nga == Ngl .and. mod(x+y,2)==0) cycle
+    m=1
+    l=l+1
+    do while (m==1)     !anchor point
+      m=0
+      pos(l,1)=Lx/nint(sqrt(N_anchor*1.))*(x-0.5)-Lx/2
+      pos(l,2)=Ly/nint(sqrt(N_anchor*1.))*(y-0.5)-Ly/2
+      pos(l,3)=0
+    end do
+    do j=1, arm
+      do k=1, Nma
+        l=l+1
+        m=1
+        p=0
+        do while (m/=0)
+          m=0
+          call random_number(rnd1)
+          call random_number(rnd2)
+          if (k==1 .and. j/=1) then   !branching point
+            pos(l,1)=pos(l-(j-2)*Nma-1,1)+R_bond*cos(2*pi*rnd2)*sin(pi*rnd1)
+            pos(l,2)=pos(l-(j-2)*Nma-1,2)+R_bond*sin(2*pi*rnd2)*sin(pi*rnd1)
+            pos(l,3)=pos(l-(j-2)*Nma-1,3)+R_bond*cos(pi*rnd1)
+          else
+            if(p<10) then
+              rnd1=rnd1/1000
             end if
-            !periodic condition
-            call period_condition_rij(pos(l,1:3))
-            !
-            !Jugde whether the particle is close the former paritcle
-            !too much.
-            do n=1,l-1
-              call rij_and_rr(rij,rsqr,n,l)
-              if (rsqr<0.7 .or. pos(l,3)<0.9) then
-                m=1
-                p=p+1
-                cycle
-              end if
-            end do
+            pos(l,1)=pos(l-1,1)+R_bond*sin(pi*rnd1)*cos(2*pi*rnd2)
+            pos(l,2)=pos(l-1,2)+R_bond*sin(pi*rnd1)*sin(2*pi*rnd2)
+            pos(l,3)=pos(l-1,3)+R_bond*cos(pi*rnd1)
+          end if
+          !periodic condition
+          call period_condition_rij(pos(l,1:3))
+          !
+          !Judge whether the particle is close the former paritcle
+          !too much.
+          do n=1,l-1
+            call rij_and_rr(rij,rsqr,n,l)
+            if (rsqr<0.7 .or. pos(l,3)<0.9) then
+              m=1
+              p=p+1
+              cycle
+            end if
           end do
         end do
       end do
-    end if
+    end do
   end do
   
-
 end subroutine uniform_star_brushes
 
 
@@ -346,50 +345,50 @@ subroutine uniform_linear_brushes(l)
   !linear brushes
   write(*,*) 'uniform linear brushes'
   do i=1, N_anchor
+    if ( Ngl == 0 ) cycle
     x=(i-1)/nint(sqrt(N_anchor*1.))+1
     y=mod(i-1,nint(sqrt(N_anchor*1.)))+1
-    if (mod(x+y,2)==1) then
-      m=1
+    if (Nga == Ngl .and. mod(x+y,2)==1) cycle
+    m=1
+    l=l+1
+    do while (m==1)
+      m=0
+      pos(l,1)=Lx/nint(sqrt(N_anchor*1.))*(x-0.5)-Lx/2
+      pos(l,2)=Ly/nint(sqrt(N_anchor*1.))*(y-0.5)-Ly/2
+      pos(l,3)=0
+    end do
+    do k=2, Nml
       l=l+1
+      m=1
+      p=0
       do while (m==1)
         m=0
-        pos(l,1)=Lx/nint(sqrt(N_anchor*1.))*(x-0.5)-Lx/2
-        pos(l,2)=Ly/nint(sqrt(N_anchor*1.))*(y-0.5)-Ly/2
-        pos(l,3)=0
-      end do
-      do k=2, Nml
-        l=l+1
-        m=1
-        p=0
-        do while (m==1)
-          m=0
-          call random_number(rnd1)
+        call random_number(rnd1)
 !           rnd1=rnd1**2
-          if (p<10) then
-            rnd1=rnd1/5
-          else
-            rnd1=rnd1**2
+        if (p<10) then
+          rnd1=rnd1/5
+        else
+          rnd1=rnd1**2
+        end if
+        call random_number(rnd2)
+        pos(l,1)=pos(l-1,1)+R_bond*sin(pi*rnd1)*cos(2*pi*rnd2)
+        pos(l,2)=pos(l-1,2)+R_bond*sin(pi*rnd1)*sin(2*pi*rnd2)
+        pos(l,3)=pos(l-1,3)+R_bond*cos(pi*rnd1)
+        !periodic condition
+        call period_condition_rij(pos(l,1:3))
+        !
+        !Judge whether the particle is close the former paritcle
+        !too much.
+        do n=1,l-1
+          call rij_and_rr(rij,rsqr,n,l)
+          if (rsqr<0.7 .or. pos(l,3)<0.9) then
+            m=1
+            p=p+1
+            cycle
           end if
-          call random_number(rnd2)
-          pos(l,1)=pos(l-1,1)+R_bond*sin(pi*rnd1)*cos(2*pi*rnd2)
-          pos(l,2)=pos(l-1,2)+R_bond*sin(pi*rnd1)*sin(2*pi*rnd2)
-          pos(l,3)=pos(l-1,3)+R_bond*cos(pi*rnd1)
-          !periodic condition
-          call period_condition_rij(pos(l,1:3))
-          !
-          !Jugde whether the particle is close the former paritcle
-          !too much.
-          do n=1,l-1
-            call rij_and_rr(rij,rsqr,n,l)
-            if (rsqr<0.7 .or. pos(l,3)<0.9) then
-              m=1
-              p=p+1
-              cycle
-            end if
-          end do
         end do
       end do
-    end if
+    end do
   end do
 
 end subroutine uniform_linear_brushes
@@ -434,7 +433,13 @@ subroutine initialize_ions
         end if
       end do
     end do
-    pos(i,4) = - qq / abs(qq)
+    if ( i <= ( NN - Nq_salt_ions * nint( abs(qqi)+1 ) ) ) then
+      pos(i,4) = - qq / abs(qq)
+    elseif ( i <= ( NN - Nq_salt_ions ) ) then
+      pos(i,4) = - qqi / abs(qqi)
+    else
+      pos(i,4) = qqi
+    end if
   end do
 
 end subroutine initialize_ions
@@ -657,6 +662,66 @@ subroutine period_condition_rij(rij)
   end if
 end subroutine period_condition_rij
 
+
+! subroutine avoid_particle_too_close(l, judge)
+!   !--------------------------------------!
+!   !Avoid this particle is so close to the all former particles
+!   !that the force between them are very large.
+!   !
+!   !
+!   !Input
+!   !  l: 
+!   !Output
+!   !  judge: 0 or 1
+!   !External Variables
+!   !  pos
+!   !Routine Referenced:
+!   !  rij_and_rr
+!   !--------------------------------------!
+!   use global_variables
+!   implicit none
+!   integer, intent(in)  :: l
+!   integer, intent(out) :: judge
+!   integer :: n
+!   real*8 :: rij(3), rsqr
+
+!   do n=1,l-1
+!     call rij_and_rr(rij,rsqr,n,l)
+!     if (rsqr<0.7 .or. pos(l,3)<0.9) then
+!       judge = 1
+!       cycle
+!     end if
+!   end do
+
+! end subroutine
+
+! subroutine next_position(post, l, rnd1, rnd2)
+!   !--------------------------------------!
+!   !Generate the post, which is random distributed
+!   !on the sphere of particle l with radius R_bond
+!   !
+!   !
+!   !Input
+!   !  l, rnd1, rnd2 
+!   !Output
+!   !  pos(l,1:3)
+!   !External Variables
+!   !  pos
+!   !Routine Referenced:
+!   !  rij_and_rr
+!   !--------------------------------------!
+!   use global_variables
+!   implicit none
+!   integer, intent(in)  :: l
+!   real*8,  intent(in)  :: rnd1
+!   real*8,  intent(in)  :: rnd2
+!   real*8,  intent(out) :: post(3)
+
+!   post(1)=pos(l,1) + R_bond * sin(pi*rnd1) * cos(2*pi*rnd2)
+!   post(2)=pos(l,2) + R_bond * sin(pi*rnd1) * sin(2*pi*rnd2)
+!   post(3)=pos(l,3) + R_bond * cos(pi*rnd1)
+
+! end subroutine next_position
 
 end module initialize_update
 

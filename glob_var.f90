@@ -20,6 +20,7 @@ save
   integer :: NN       !Total particles in the system
   integer :: N_anchor !Anchored chains
   integer :: man      !Manning effect: every man pariticle have one charge
+  integer :: Nq_salt_ions !Charged salt ions, which not include anions.
   real*8  :: Lx       !Length of cell in x direction
   real*8  :: Ly       !Length of cell in y direction
   real*8  :: Lz       !Distance of two plate
@@ -29,7 +30,10 @@ save
   real*8  :: Beta     !Beta=1/(kB*T), T is temperature, 
                       !kB is Boltzmann constant
   real*8  :: qq       !Charge of charged monomers
+  real*8  :: qqi      !Charge of salt ions
+  real*8  :: ion_ratio!Ratio of salt ions to the charge quantites of PE
   real*8  :: R_bond   !length of chemical band
+
 !##################end systems coefficient#################!
 
 !##################running and Histogram###################!
@@ -57,6 +61,7 @@ save
   real*8, allocatable, dimension(:,:) :: pos    !array of position
   real*8, allocatable, dimension(:,:) :: vel    !array of velocity
   real*8, allocatable, dimension(:,:) :: acc    !array of accelaration
+  integer, allocatable, dimension(:) :: charged_arm
 !########################end arrays########################!
 
 
