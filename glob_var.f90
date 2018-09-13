@@ -32,6 +32,7 @@ save
   real*8  :: qq       !Charge of charged monomers
   real*8  :: qqi      !Charge of salt ions
   real*8  :: ion_ratio!Ratio of salt ions to the charge quantites of PE
+  integer :: Nq_PE    !Charged monomers of PE
   real*8  :: R_bond   !length of chemical band
 
 !##################end systems coefficient#################!

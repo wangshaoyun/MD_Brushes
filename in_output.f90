@@ -191,7 +191,6 @@ subroutine data_operation
   logical alive
   integer :: i
   integer :: arm_q          !Charged arms of star brushes
-  integer :: Nq_PE          !Charged monomers of PE
   integer :: Charge_ions    !电量而不是粒子数
   !
   !the situation of the arm whether is charge or not
@@ -203,7 +202,7 @@ subroutine data_operation
   close( 100 )
   !
   !The total arms that are charged
-  arm_q = sum(charged_arm)
+  arm_q = sum( charged_arm )
   !
   !The total monomers of star brushes
   Nta = ( Nma*arm + 1 ) * Nga
@@ -231,7 +230,7 @@ subroutine data_operation
   if ( abs(qqi) == 0 ) then
     Nq_salt_ions = 0
   else
-    Charge_ions = nint( ion_ratio * Nq_PE * nint(abs(qq)) )
+    Charge_ions  = nint( ion_ratio * Nq_PE * nint(abs(qq)) )
     Nq_salt_ions = Charge_ions / nint(abs(qqi))
   end if
   Nq = Nq_PE * ( nint(abs(qq))+1 ) + Nq_salt_ions * ( nint(abs(qqi)) + 1 )
@@ -447,23 +446,23 @@ implicit none
   write(*,*) '****************************************************'
 
 end subroutine write_system_parameters
-
-
+  
+  
 subroutine continue_read_data(l)
   !--------------------------------------!
   !When the program is break off due to power off,
   !we need to continue the program from the former data.
   !This subroutine is used to read data from file to continue
   !calculating.
-  !
+  !  
   !Input
   !  
   !Output
-  !   
+  !  
   !External Variables
   !  
   !Routine Referenced:
-  !
+  !   
   !--------------------------------------!
   use global_variables
   integer, intent(out) :: l
@@ -485,16 +484,16 @@ subroutine continue_read_data(l)
   !
   !read steps and total_time of the former calculation.
   open(19,file='./start_time.txt')
-    read(19,*)
+    read(19,*) 
     read(19,*) l
     read(19,*) total_time
-    l=l+1
+    l = l + 1
   close(19)
   !
   !read physical quantities
-  phi=0
-  theta=0
-  force=0
+  phi   = 0
+  theta = 0
+  force = 0
   delta_angle=0
   open(19,file='./data/alpha_phi.txt')
   open(20,file='./data/phi.txt')
@@ -505,19 +504,19 @@ subroutine continue_read_data(l)
   open(25,file='./data/force_liear1.txt')
   open(26,file='./data/force_star1.txt')
     read(19,*) ((alpha_phi(i,j),j=1,6),i=1,SizeHist)
-      phi_branch(:,2) = alpha_phi(:,2)
-      alpha_stem(:,2) = alpha_phi(:,4)
+      phi_branch(:,2)   = alpha_phi(:,2)
+      alpha_stem(:,2)   = alpha_phi(:,4)
       alpha_branch(:,2) = alpha_phi(:,6)
     read(20,*) ((phi(i,j),j=1,10),i=1,SizeHist)
-      phi_tot(:,2)=phi(:,2)
-      phi_l(:,2)=phi(:,3)
-      phi_le(:,2)=phi(:,4)
-      phi_s(:,2)=phi(:,5)
-      phi_sb(:,2)=phi(:,6)
-      phi_se(:,2)=phi(:,7)
-      phi_a(:,2)=phi(:,8)
-      phi_i(:,2)=phi(:,9)
-      phi_q(:,2)=phi(:,10)
+      phi_tot(:,2)= phi(:,2)
+      phi_l(:,2)  = phi(:,3)
+      phi_le(:,2) = phi(:,4)
+      phi_s(:,2)  = phi(:,5)
+      phi_sb(:,2) = phi(:,6)
+      phi_se(:,2) = phi(:,7)
+      phi_a(:,2)  = phi(:,8)
+      phi_i(:,2)  = phi(:,9)
+      phi_q(:,2)  = phi(:,10)
     read(21,*) ((theta(i,j),j=1,8),i=1,SizeHist)
       theta_l(:,2)=theta(:,2)
       theta_lz(:,2)=theta(:,3)

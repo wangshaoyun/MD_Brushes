@@ -42,6 +42,14 @@ implicit none
     !read position and histogram data
     call continue_read_data(i)
     !
+    !initialize lj_verlet_list
+    call lj_verlet_list
+    !
+    !Construct the real verlet list and real_point vector
+    if ( real_verlet == 1 ) then
+      call real_verlet_list
+    end if
+    !
     !error analysis
     if (qq /= 0 ) then
       call error_analysis
@@ -61,7 +69,7 @@ implicit none
       call new_position
       !
       !Rescale velocity to avoid the break of chemical bonds
-      if ( mod( step, 20 ) == 0 .and. step<100000 ) then
+      if ( mod( step, 20 ) == 0 .and. step < 300000 ) then
         call rescale_velocity
       end if
       call update_verlet_list

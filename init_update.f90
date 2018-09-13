@@ -49,7 +49,7 @@ subroutine Initialize_position
   end if
   !
   !initialize chargen on PE
-  do i=1,Nq/(nint(abs(qq))+1)
+  do i=1, Nq_PE
     pos(charge(i),4) = qq                 
   end do
   !
@@ -433,7 +433,7 @@ subroutine initialize_ions
         end if
       end do
     end do
-    if ( i <= ( NN - Nq_salt_ions * nint( abs(qqi)+1 ) ) ) then
+    if ( i <= ( NN - Nq_salt_ions * (nint(abs(qqi))+1) ) ) then
       pos(i,4) = - qq / abs(qq)
     elseif ( i <= ( NN - Nq_salt_ions ) ) then
       pos(i,4) = - qqi / abs(qqi)

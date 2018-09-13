@@ -740,26 +740,26 @@ subroutine Compute_Force
   integer :: i,j,k
   
   acc=0
-  if (qq/=0 .and. mod(step,multistep)==0) then    
-    acc_c=0
-    posq(:,:)=pos(charge,:)
+  if ( qq /= 0 .and. mod(step,multistep) == 0 ) then    
+    acc_c = 0
+    posq(:,:) = pos(charge,:)
     call SPME_Ewald
     call real_space
   end if
-  acc=acc_c
+  acc = acc_c
   call lj_force
   call fene_force
   do i=1, NN
     call gauss_dist(0.D0,sqrt(2./Beta/dt*xi),eta1)
     call gauss_dist(0.D0,sqrt(2./Beta/dt*xi),eta2)
     call gauss_dist(0.D0,sqrt(2./Beta/dt*xi),eta3)
-    acc(i,1)=acc(i,1)+eta1
-    acc(i,2)=acc(i,2)+eta2
-    acc(i,3)=acc(i,3)+eta3+pos(i,4)*EF          
+    acc(i,1) = acc(i,1) + eta1
+    acc(i,2) = acc(i,2) + eta2
+    acc(i,3) = acc(i,3) + eta3 + pos(i,4)*EF          
   end do
-  do i=1,N_anchor
-    j=anchor_list(i)
-    acc(j,1:3)=0
+  do i = 1, N_anchor
+    j = anchor_list(i)
+    acc(j,1:3) = 0
   end do
 end subroutine Compute_Force
 
@@ -768,7 +768,7 @@ subroutine fene_force
   !-----------------------------------------!
   !Note: rij=ri-rj
   !-----------------------------------------!
-  use input_output, only : write_pos, write_vel, write_acc
+!   use input_output, only : write_pos, write_vel, write_acc
   use global_variables
   implicit none
   integer :: i,j,k,n
@@ -781,9 +781,10 @@ subroutine fene_force
     if(rsqr>R0_2) then
       write(*,*) 'The bond is break off!'
       write(*,*) k*1.,j*1.,sqrt(rsqr)
-      call write_pos
-      call write_vel
-      call write_acc
+      write(*,*) 'step:', step
+!       call write_pos
+!       call write_vel
+!       call write_acc
       stop
     end if
     ff=-kfene*R0_2/(R0_2-rsqr)*rjk
