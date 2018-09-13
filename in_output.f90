@@ -652,49 +652,49 @@ subroutine height
   implicit none
   integer i,j,k,l,m,n,p,q,r,s,num_stretch,num_collapse
   real*8 :: rr,rsqr,rr1,rr2,rr3,maxh,Rg1,Rg1z,Rg2,Rg2z
-  real*8 :: max_hs_end,min_hs_end,hs_avg_arm,max_hs,min_hs
+  real*8 :: max_hs_end,min_hs_end,hs_avg_arm,hb_avg,max_hs,min_hs
   real*8, dimension(3) :: rij
   real*8, dimension(3) :: rij1,rij2,rij3,f1
-  real*8 :: h1, h2, h3, h4
+  real*8 :: h1
 
 
   !------------ZhangFen------------!
-  R_up = 0
+  R_up   = 0
   R_down = 0
-  R_I = 0
+  R_I    = 0
+  hb_avg = 0
+  n      = arm * Nma + 1 
   capital_xi = 0
-  n = arm * Nma + 1 
   do i = 1, Nga
-    hs_avg = 0
-    do j = 1, n
-      hs_avg = hs_avg + pos( (i-1) * n + j, 3 )
-    end do
-    hs_avg = hs_avg / n
+    hb_avg = hb_avg + pos( (i-1)*n+Nma+1, 3 ) 
+  end do
+  hb_avg = hb_avg / Nga
+  do i = 1, Nga
     max_hs = 0
     min_hs = Lz
-    do j = 1, Nma
-      h1 = pos( (i-1) * n + Nma + j + 1, 3 )
-      h2 = pos( (i-1) * n + Nma*2 + j + 1, 3 )
-      h3 = maxval((/h1,h2/))
-      h4 = minval((/h1,h2/))
-      if ( max_hs < h3 ) then
-        max_hs = h3
-      end if
-      if ( min_hs > h4 ) then
-        min_hs = h4
-      end if
+    do j = 2, arm
+      do k = 1, Nma
+        m = (i-1)*n + (j-1)*Nma + 1 + k
+        h1 = pos(m, 3 )
+        if ( max_hs < h1 ) then
+          max_hs = h1
+        end if
+        if ( min_hs > h1 ) then
+          min_hs = h1
+        end if
+      end do
     end do
-    if (min_hs > hs_avg) then
+    if (min_hs > hb_avg) then
       R_up = R_up + 1
-    elseif (max_hs < hs_avg) then
+    elseif (max_hs < hb_avg) then
       R_down = R_down + 1
     else
       R_I = R_I + 1
     end if
   end do
-  R_up = R_up / Nga
+  R_up   = R_up / Nga
   R_down = R_down / Nga
-  R_I = R_I / Nga
+  R_I    = R_I / Nga
 
   do i = Npe+1, NN
     do j = 1, size(capital_xi)
@@ -1122,7 +1122,7 @@ subroutine histogram
     m = i * n
 
     call rij_and_rr(rij1, rr1, j, k)
-    x = ceiling( asin( rij1(3) / sqrt(rr1) ) / (pi/2/SizeHist) )
+    x = ceiling( asin( abs(rij1(3)) / sqrt(rr1) ) / (pi/2/SizeHist) )
     if ( x == 0 ) cycle
     if (x<0 .or. x>SizeHist) then
       write(*,*) 'Wrong in phi_tot: x<0 or x>SizeHist!'

@@ -5,7 +5,7 @@
 0.8333D0        ! Beta:     1/kT, T=298K
 -1              ! qq:       charge of PE
 -1              ! qqi:      charge of salt ions
-0              ! ion_ratio
+0               ! ion_ratio
 3               ! arm: number of arm in star brushes
 45              ! Nma: number of monomers of each arm
 64              ! Nga: grafting number of star brushes
@@ -13,11 +13,11 @@
 0               ! Ngl: grafting number of linear chains
 1               ! man: Manning effect : every 'man' particle have one charge
 0.97D0          ! R_bond
-5000000         ! StepNum0
+0000000         ! StepNum0
 10000000        ! StepNum:  steps of running
 2000            ! DeltaStep1: height
 2000            ! DeltaStep2: histogram
-2000            ! DeltaStep3: write data
+2000           ! DeltaStep3: write data
 10              ! multistep
 0.005D0         ! dt:       distance of each move
 
