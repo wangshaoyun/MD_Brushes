@@ -478,6 +478,7 @@ subroutine initialize_velocity
     vel(anchor_list(i),:) = 0
   end do
   call rescale_velocity
+  write(*,*) 'initialize velocity finished'
 end subroutine initialize_velocity
 
 

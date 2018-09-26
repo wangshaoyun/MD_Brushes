@@ -278,7 +278,7 @@ subroutine build_fene_list
 
   N_bond=arm*Nma*Nga+(Nml-1)*Ngl
   allocate( fene_list(N_bond,2) )
-  allocate(  anchor_list(Nta)   )
+  allocate( anchor_list(N_anchor) )
   !
   !anchors of the polymers 
   do i = 1, Nga
@@ -644,7 +644,6 @@ subroutine error_analysis
   real*8 f_r, f_k, q_tot, rmsf, tol1, tau_rf1, sumf1, sumf2,st,fn,tm1,tm2
   integer i,j,m
   real*8, dimension(NN,3):: acc_se
-  
   q_tot=0
   do m=1,Nq
     i=charge(m)
@@ -654,7 +653,6 @@ subroutine error_analysis
   f_k=abs(qq)*alpha/(Lx*Ly*Lz)**(1./3)/pi*sqrt(8*q_tot/(Kmax1*Kmax2*Kmax3)**(1./3))*exp(-tol*tol)
   write(*,*) 'Standard Ewald error in real space:', f_r
   write(*,*) 'Standard Ewald error in fourier spqce', f_k
-  
   tol1=tol
   tau_rf1=tau_rf
   tol=5                   !the error is about 1e-6

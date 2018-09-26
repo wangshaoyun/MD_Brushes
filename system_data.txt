@@ -1,23 +1,23 @@
-0               ! 0:uniform, 1:random
+1               ! 0:uniform, 1:random
 130             ! Lz
 2               ! Z_empty
 1D-2            ! sigmag
 0.8333D0        ! Beta:     1/kT, T=298K
 -1              ! qq:       charge of PE
--3              ! qqi:      charge of salt ions
-0.2             ! ion_ratio
+0              ! qqi:      charge of salt ions
+0              ! ion_ratio
 4               ! arm: number of arm in star brushes
-45              ! Nma: number of monomers of each arm
-16              ! Nga: grafting number of star brushes
-61              ! Nml: Monomers of each linear chain, mod(Nml-1,man)==0 
-0               ! Ngl: grafting number of linear chains
-3               ! man: Manning effect : every 'man' particle have one charge
+45               ! Nma: number of monomers of each arm
+0              ! Nga: grafting number of star brushes
+100              ! Nml: Monomers of each linear chain, mod(Nml-1,man)==0 
+36               ! Ngl: grafting number of linear chains
+1               ! man: Manning effect : every 'man' particle have one charge
 0.97D0          ! R_bond
-5000000         ! StepNum0
-10000000        ! StepNum:  steps of running
+3000000         ! StepNum0
+7000000        ! StepNum:  steps of running
 2000            ! DeltaStep1: height
 2000            ! DeltaStep2: histogram
 2000            ! DeltaStep3: write data
-15              ! multistep
+10              ! multistep
 0.005D0         ! dt:       distance of each move
 
