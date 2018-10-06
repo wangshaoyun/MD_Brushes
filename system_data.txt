@@ -8,7 +8,7 @@
 0              ! ion_ratio
 4               ! arm: number of arm in star brushes
 45               ! Nma: number of monomers of each arm
-0              ! Nga: grafting number of star brushes
+20              ! Nga: grafting number of star brushes
 100              ! Nml: Monomers of each linear chain, mod(Nml-1,man)==0 
 36               ! Ngl: grafting number of linear chains
 1               ! man: Manning effect : every 'man' particle have one charge

@@ -6,6 +6,7 @@ save
   real*8,  allocatable, dimension(:,:), private :: phi_branch
   real*8,  allocatable, dimension(:,:), private :: alpha_stem
   real*8,  allocatable, dimension(:,:), private :: alpha_branch
+  real*8,  allocatable, dimension(:,:), private :: alpha_end
   !Histogram
   real*8,  allocatable, dimension(:,:), private :: phi_tot
   real*8,  allocatable, dimension(:,:), private :: phi_l
@@ -34,6 +35,20 @@ save
   real*8,  allocatable, dimension(:,:), private :: force_sy1
   real*8,  allocatable, dimension(:,:), private :: force_sn1
   real*8,  allocatable, dimension(:,:), private :: force_so1
+  real*8,  allocatable, dimension(:,:), private :: linear_h_dist
+  real*8,  allocatable, dimension(:,:), private :: linear_Rg2_dist
+  real*8,  allocatable, dimension(:,:), private :: linear_Rgz2_dist
+  real*8,  allocatable, dimension(:,:), private :: linear_Rgxy2_dist
+  real*8,  allocatable, dimension(:,:), private :: star_h_dist
+  real*8,  allocatable, dimension(:,:), private :: star_Rg2_dist
+  real*8,  allocatable, dimension(:,:), private :: star_Rgz2_dist
+  real*8,  allocatable, dimension(:,:), private :: star_Rgxy2_dist
+  real*8,  allocatable, dimension(:,:), private :: star_end_h_dist
+  integer,  allocatable, dimension(:,:), private :: fene_f
+  integer,  allocatable, dimension(:,:), private :: lj_force_PE
+  integer,  allocatable, dimension(:,:), private :: lj_force_ions
+  integer,  allocatable, dimension(:,:), private :: coulomb_f
+  integer,  allocatable, dimension(:,:), private :: Bond_dist
   integer, allocatable, dimension(:,:), private :: phi_zx
   integer, allocatable, dimension(:,:), private :: phi_xy
   integer, allocatable, dimension(:,:), private :: phi_yz
@@ -90,15 +105,15 @@ save
   real*8, private :: Rg_sbz
   !Physical quantities of energy
   real*8, private :: kenetic_energy
-  real*8, private :: ratio_stretch
-  real*8, private :: ratio_collapse
-  real*8, private :: ratio_other
-  !Zhang Fen
-  real*8, private :: R_up
-  real*8, private :: R_down
-  real*8, private :: R_I
-  real*8, dimension(10), private :: capital_xi
-
+  real*8, private :: R_up1
+  real*8, private :: R_down1
+  real*8, private :: R_I1
+  real*8, private :: R_up2
+  real*8, private :: R_down2
+  real*8, private :: R_I2
+  real*8, private :: R_up3
+  real*8, private :: R_down3
+  real*8, private :: R_I3
 contains
 
 subroutine initialize_parameters
@@ -285,6 +300,7 @@ subroutine data_allocate
   allocate( phi_branch(SizeHist,2)      )
   allocate( alpha_stem(SizeHist,2)      )
   allocate( alpha_branch(SizeHist,2)    )
+  allocate( alpha_end(SizeHist,2)    )
   !
   !Histogram
   allocate( phi_tot(SizeHist,2)         )
@@ -314,6 +330,20 @@ subroutine data_allocate
   allocate( force_sy1(SizeHist,2)       )
   allocate( force_sn1(SizeHist,2)       )
   allocate( force_so1(SizeHist,2)       )
+  allocate( linear_h_dist(SizeHist,2)   )
+  allocate( linear_Rg2_dist((floor(Lz/2))**2,2) )
+  allocate( linear_Rgz2_dist((floor(Lz/2))**2,2))
+  allocate(linear_Rgxy2_dist((floor(Lz/2))**2,2))
+  allocate( star_h_dist(SizeHist,2)     )
+  allocate( star_Rg2_dist((floor(Lz/2))**2,2)   )
+  allocate( star_Rgz2_dist((floor(Lz/2))**2,2)  )
+  allocate( star_Rgxy2_dist((floor(Lz/2))**2,2) )
+  allocate( star_end_h_dist(SizeHist,2) )
+  allocate( fene_f(SizeHist,SizeHist) )
+  allocate( lj_force_PE(SizeHist,SizeHist) )
+  allocate( lj_force_ions(SizeHist,SizeHist) )
+  allocate( coulomb_f(SizeHist,SizeHist) )
+  allocate( Bond_dist(SizeHist,SizeHist) )
   allocate( phi_zx(SizeHist,SizeHist)   )
   allocate( phi_xy(SizeHist,SizeHist)   )
   allocate( phi_yz(SizeHist,SizeHist)   )
@@ -369,6 +399,20 @@ subroutine data_allocate
   force_sy1    = 0
   force_sn1    = 0
   force_so1    = 0
+  linear_h_dist = 0 
+  linear_Rg2_dist = 0  
+  linear_Rgz2_dist = 0
+  linear_Rgxy2_dist = 0
+  star_h_dist = 0
+  star_Rg2_dist = 0
+  star_Rgz2_dist = 0
+  star_Rgxy2_dist = 0
+  star_end_h_dist = 0
+  fene_f = 0
+  lj_force_PE = 0
+  lj_force_ions = 0
+  coulomb_f = 0
+  Bond_dist = 0
   phi_zx       = 0
   phi_xy       = 0
   phi_yz       = 0
@@ -470,12 +514,14 @@ subroutine continue_read_data(l)
   use global_variables
   integer, intent(out) :: l
   integer :: i,j
-  real*8, dimension(SizeHist,6)  :: alpha_phi
+  real*8, dimension(SizeHist,8)  :: alpha_phi
   real*8, dimension(SizeHist,10) :: phi
   real*8, dimension(SizeHist,8)  :: theta
   real*8, dimension(2*Nma,4)     :: force
   real*8, dimension(SizeHist,4)  :: force1
   real*8, dimension(SizeHist,4)  :: delta_angle
+  real*8, dimension((floor(Lz/2))**2,7) :: Rg_dist
+  real*8, dimension(SizeHist,4)  :: h_dist
   !
   !read pos and vel
   open(20,file='./data/pos1.txt')
@@ -506,10 +552,13 @@ subroutine continue_read_data(l)
   open(24,file='./data/delta_angle.txt')
   open(25,file='./data/force_liear1.txt')
   open(26,file='./data/force_star1.txt')
-    read(19,*) ((alpha_phi(i,j),j=1,6),i=1,SizeHist)
+  open(27,file='./data/Rg_dist.txt')
+  open(28,file='./data/h_dist.txt')
+    read(19,*) ((alpha_phi(i,j),j=1,8),i=1,SizeHist)
       phi_branch(:,2)   = alpha_phi(:,2)
       alpha_stem(:,2)   = alpha_phi(:,4)
       alpha_branch(:,2) = alpha_phi(:,6)
+      alpha_end(:,2)    = alpha_phi(:,8)
     read(20,*) ((phi(i,j),j=1,10),i=1,SizeHist)
       phi_tot(:,2)= phi(:,2)
       phi_l(:,2)  = phi(:,3)
@@ -533,15 +582,28 @@ subroutine continue_read_data(l)
       force_sy(:,2)=force(:,2)
       force_sn(:,2)=force(:,3)
       force_so(:,2)=force(:,4)
+    read(24,*) ((delta_angle(i,j),j=1,4),i=1,SizeHist)
+      delta_angle1(:,2)=delta_angle(:,2)
+      delta_angle2(:,2)=delta_angle(:,3)
+      delta_angle3(:,2)=delta_angle(:,4)
     read(25,*) ((force_l1(i,j),j=1,2),i=1,SizeHist)
     read(26,*) ((force1(i,j),j=1,4),i=1,SizeHist)
       force_sy1(:,2)=force1(:,2)
       force_sn1(:,2)=force1(:,3)
       force_so1(:,2)=force1(:,4)
-    read(24,*) ((delta_angle(i,j),j=1,4),i=1,SizeHist)
-      delta_angle1(:,2)=delta_angle(:,2)
-      delta_angle2(:,2)=delta_angle(:,3)
-      delta_angle3(:,2)=delta_angle(:,4)
+    read(27,*) ((Rg_dist(i,j),j=1,7),i=1,(floor(Lz/2))**2)
+      linear_Rg2_dist(:,2)=Rg_dist(:,2)
+      linear_Rgz2_dist(:,2)=Rg_dist(:,3)
+      linear_Rgxy2_dist(:,2)=Rg_dist(:,4)
+      star_Rg2_dist(:,2)=Rg_dist(:,5)
+      star_Rgz2_dist(:,2)=Rg_dist(:,6)
+      star_Rgxy2_dist(:,2)=Rg_dist(:,7)
+    read(28,*) ((h_dist(i,j),j=1,4),i=1,SizeHist)
+      linear_h_dist(:,2)=h_dist(:,2)
+      star_h_dist(:,2)=h_dist(:,3)
+      star_end_h_dist(:,2)=h_dist(:,4)
+  close(28)
+  close(27)
   close(26)
   close(25)
   close(24)
@@ -579,6 +641,11 @@ subroutine continue_read_data(l)
   open(45,file='./data/phi_2d91.txt')
   open(46,file='./data/phi_2d92.txt')
   open(47,file='./data/phi_2d93.txt')
+  open(48,file='./data/fene_f.txt')
+  open(49,file='./data/lj_force_PE.txt')
+  open(50,file='./data/lj_force_ions.txt')
+  open(51,file='./data/coulomb_f.txt')
+  open(52,file='./data/Bond_dist.txt')
     read(21,*) ((phi_zx(i,j),j=1,SizeHist),i=1,SizeHist)
     read(22,*) ((phi_xy(i,j),j=1,SizeHist),i=1,SizeHist)
     read(23,*) ((phi_yz(i,j),j=1,SizeHist),i=1,SizeHist)
@@ -606,6 +673,16 @@ subroutine continue_read_data(l)
     read(45,*) ((phi_qzx(i,j),j=1,SizeHist),i=1,SizeHist)
     read(46,*) ((phi_qxy(i,j),j=1,SizeHist),i=1,SizeHist)
     read(47,*) ((phi_qyz(i,j),j=1,SizeHist),i=1,SizeHist)
+    read(48,*) ((fene_f(i,j),j=1,SizeHist),i=1,SizeHist)
+    read(49,*) ((lj_force_PE(i,j),j=1,SizeHist),i=1,SizeHist)
+    read(50,*) ((lj_force_ions(i,j),j=1,SizeHist),i=1,SizeHist)
+    read(51,*) ((coulomb_f(i,j),j=1,SizeHist),i=1,SizeHist)
+    read(52,*) ((Bond_dist(i,j),j=1,SizeHist),i=1,SizeHist)
+  close(52)
+  close(51)
+  close(50)
+  close(49)
+  close(48)
   close(47)
   close(46)
   close(45)
@@ -654,19 +731,17 @@ subroutine height
   implicit none
   integer i,j,k,l,m,n,p,q,r,s,num_stretch,num_collapse
   real*8 :: rr,rsqr,rr1,rr2,rr3,maxh,Rg1,Rg1z,Rg2,Rg2z
-  real*8 :: max_hs_end,min_hs_end,hs_avg_arm,hb_avg,max_hs,min_hs
+  real*8 :: max_hs_end,min_hs_end,hs_avg_arm,hb_avg,he_avg,max_hs,min_hs
   real*8, dimension(3) :: rij
   real*8, dimension(3) :: rij1,rij2,rij3,f1
   real*8 :: h1
 
-
-  !------------ZhangFen------------!
-  R_up   = 0
-  R_down = 0
-  R_I    = 0
+  !------------up and down-------------!
+  R_up1   = 0
+  R_down1 = 0
+  R_I1    = 0
   hb_avg = 0
   n      = arm * Nma + 1 
-  capital_xi = 0
   do i = 1, Nga
     hb_avg = hb_avg + pos( (i-1)*n+Nma+1, 3 ) 
   end do
@@ -687,26 +762,53 @@ subroutine height
       end do
     end do
     if (min_hs > hb_avg) then
-      R_up = R_up + 1
+      R_up1 = R_up1 + 1
     elseif (max_hs < hb_avg) then
-      R_down = R_down + 1
+      R_down1 = R_down1 + 1
     else
-      R_I = R_I + 1
+      R_I1 = R_I1 + 1
     end if
   end do
-  R_up   = R_up / Nga
-  R_down = R_down / Nga
-  R_I    = R_I / Nga
+  R_up1   = R_up1 / Nga
+  R_down1 = R_down1 / Nga
+  R_I1    = R_I1 / Nga
 
-  do i = Npe+1, NN
-    do j = 1, size(capital_xi)
-      if ( pos(i,3) < 5+j ) then
-        capital_xi(j) = capital_xi(j) + 1
-      end if
+  R_up1   = 0
+  R_down1 = 0
+  R_I1    = 0
+  he_avg = 0
+  n      = arm * Nma + 1 
+  do i = 1, Nga
+    do j = 2, arm
+      he_avg = he_avg + pos( (i-1)*n+Nma*j+1, 3 ) 
     end do
   end do
-  capital_xi = capital_xi / ( NN-Npe )
-  !--------------------------------!
+  he_avg = he_avg / Nga / (arm-1)
+  do i = 1, Nga
+    max_hs = 0
+    min_hs = Lz
+    do j = 2, arm
+      m = (i-1)*n + j*Nma + 1
+      h1 = pos(m, 3)
+      if ( max_hs < h1 ) then
+        max_hs = h1
+      end if
+      if ( min_hs > h1 ) then
+        min_hs = h1
+      end if
+    end do
+    if (min_hs > he_avg) then
+      R_up2 = R_up2 + 1
+    elseif (max_hs < he_avg) then
+      R_down2 = R_down2 + 1
+    else
+      R_I2 = R_I2 + 1
+    end if
+  end do
+  R_up2   = R_up2 / Nga
+  R_down2 = R_down2 / Nga
+  R_I2    = R_I2 / Nga
+  !------------------------------------!
 
   h_avg=0
   hl_avg=0
@@ -736,9 +838,9 @@ subroutine height
   Rg_sbz=0
   
   kenetic_energy=0
-  ratio_stretch=0
-  ratio_collapse=0
-  ratio_other=0
+  R_up3=0
+  R_down3=0
+  R_I3=0
 
 !!----------------------h_avg-------------------------!
   do i=1,Npe
@@ -764,7 +866,7 @@ subroutine height
 !!-------------force_sy,force_sn,force_sn--------------!
 !!------------force_sy1,force_sn1,force_sn1------------!
 !!--------delta_angle1,delta_angle2,delta_angle3-------!
-!!-------ratio_stretch,ratio_collapse,ratio_other------!
+!!------------------R_up3,R_down3,R_I3-----------------!
   do i=1,Nga
     maxh=0
     max_hs_end=0
@@ -793,10 +895,11 @@ subroutine height
       end if
     end do
     hs_avg=hs_avg+hs_avg_arm
+    hs_avg=hs_avg/(Nga*(arm*Nma+1))
     hs_max=hs_max+maxh
     hs_avg_arm=hs_avg_arm/(arm*Nma+1)
-    if (max_hs_end<hs_avg_arm) then
-      ratio_collapse=ratio_collapse+1
+    if (max_hs_end<hs_avg) then
+      R_down3=R_down3+1
       do k=2,Nma+1
         m=(i-1)*(arm*Nma+1)+k
         n=(i-1)*(arm*Nma+1)+k-1
@@ -834,8 +937,8 @@ subroutine height
         end if
         delta_angle2(p,2)=delta_angle2(p,2)+1
       end do
-    elseif (min_hs_end>hs_avg_arm) then
-      ratio_stretch=ratio_stretch+1
+    elseif (min_hs_end>hs_avg) then
+      R_up3=R_up3+1
       do k=2,Nma+1
         m=(i-1)*(arm*Nma+1)+k
         n=(i-1)*(arm*Nma+1)+k-1
@@ -874,7 +977,7 @@ subroutine height
         delta_angle1(p,2)=delta_angle1(p,2)+1
       end do
     else
-      ratio_other=ratio_other+1
+      R_I3=R_I3+1
       do k=2,Nma+1
         m=(i-1)*(arm*Nma+1)+k
         n=(i-1)*(arm*Nma+1)+k-1
@@ -914,13 +1017,12 @@ subroutine height
       end do
     end if    
   end do
-  hs_avg=hs_avg/(Nga*(arm*Nma+1))
   hs_max=hs_max/Nga
   hs_end=hs_end/(Nga*(arm-1))
   hs_branch=hs_branch/Nga
-  ratio_stretch=ratio_stretch/Nga
-  ratio_collapse=ratio_collapse/Nga
-  ratio_other=ratio_other/Nga
+  R_up3=R_up3/Nga
+  R_down3=R_down3/Nga
+  R_I3=R_I3/Nga
 !!---------------Re_l,Re_lz,Rg_l,Rg_lz------------------! 
   do i=1,Ngl
     m=Nta+(i-1)*Nml+1
@@ -1058,9 +1160,10 @@ subroutine write_height(j)
   integer, intent(in) :: j
 
   open(35,position='append', file='./data/up_and_down.txt')
-    write(35,350) 1.*j, R_up, R_down, R_I, capital_xi
+    write(35,350) 1.*j, R_up1, R_down1, R_I1, R_up2, R_down2, R_I2,  &
+                        R_up3, R_down3, R_I3
   close(35)
-  350 format(14F15.6)
+  350 format(10F15.6)
 !     open(36,position='append', file='./data/height.txt')
 !       write(36,361) 1.*j, h_avg
 !     close(36)
@@ -1075,7 +1178,7 @@ subroutine write_height(j)
     write(36,360) 1.*j, Rg_l, Rg_lz, Rg_ss, Rg_ssz, Rg_sb, Rg_sbz, Rg_s, Rg_sz
   close(36)
   open(36,position='append', file='./data/KE.txt')
-    write(36,370) 1.*j, kenetic_energy, ratio_stretch, ratio_collapse, ratio_other
+    write(36,370) 1.*j, kenetic_energy, R_up3, R_down3, R_I3
   close(36)
   360 format(9F17.6)
   370 format(4F17.6)
@@ -1101,8 +1204,111 @@ subroutine histogram
   implicit none
   integer :: i, j, k, l, m, n, p, q, r, x, y, z
   real*8, dimension(3) :: rij1,rij2,rij3,f1
-  real*8 rsqr,theta,rr1,rr2,rr3,he_min,he_max,hb
+  real*8 :: rsqr,theta,rr1,rr2,rr3,he_min,he_max,hb
+  real*8 :: h_avg, Rg2_avg, Rgz2_avg, Rgxy2_avg
+
+  call force_distribution(fene_f,lj_force_PE,lj_force_ions,coulomb_f,Bond_dist)
   
+  !----------------h_dist--------------!
+  n = arm*Nma + 1
+  do i = 1, Nga
+    h_avg = 0
+    do j = 1, n
+      h_avg = h_avg + pos( (i-1)*n+j, 3 )
+    end do
+    h_avg = h_avg/n
+    k = ceiling( h_avg / (Lz/SizeHist) )
+    if ( k == 0 ) cycle
+    if (k<0 .or. k>SizeHist) then
+      write(*,*) 'Wrong in star_h_dist: k<0 or k>SizeHist!'
+      cycle
+    end if
+    star_h_dist(k,2) = star_h_dist(k,2)+1
+  end do
+
+  n = arm*Nma + 1
+  do i = 1, Nga
+    h_avg = 0
+    do j = 2, arm
+      h_avg = h_avg + pos( (i-1)*n+j*Nma+1, 3 )
+    end do
+    h_avg = h_avg / (arm-1)
+    k = ceiling( h_avg / (Lz/SizeHist) )
+    if ( k == 0 ) cycle
+    if (k<0 .or. k>SizeHist) then
+      write(*,*) 'Wrong in star_end_h_dist: k<0 or k>SizeHist!'
+      cycle
+    end if
+    star_end_h_dist(k,2) = star_end_h_dist(k,2)+1
+  end do
+
+  n = Nga * (arm*Nma + 1)
+  do i = 1, Ngl
+    h_avg = 0
+    do j = 1, Nml
+      h_avg = h_avg + pos( n+(i-1)*Nml+j, 3 )
+    end do
+    h_avg = h_avg/Nml
+    k = ceiling( h_avg / (Lz/SizeHist) )
+    if ( k == 0 ) cycle
+    if (k<0 .or. k>SizeHist) then
+      write(*,*) 'Wrong in linear_h_dist: k<0 or k>SizeHist!'
+      cycle
+    end if
+    linear_h_dist(k,2) = linear_h_dist(k,2)+1
+  end do
+  !------------------------------------!
+
+  !---------------Rg_dist--------------!
+  do i = 1, Nga
+    call star_Rg(i,Rg2_avg,Rgz2_avg,Rgxy2_avg)
+    k = ceiling( Rg2_avg )
+    if ( k == 0 ) cycle
+    if (k<0 .or. k>(floor(Lz/2)**2)) then
+      write(*,*) 'Wrong in star_Rg2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      cycle
+    end if
+    star_Rg2_dist(k,2) = star_Rg2_dist(k,2) + 1
+    k = ceiling( Rgz2_avg )
+    if ( k == 0 ) cycle
+    if (k<0 .or. k>(floor(Lz/2)**2)) then
+      write(*,*) 'Wrong in star_Rgz2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      cycle
+    end if
+    star_Rgz2_dist(k,2) = star_Rgz2_dist(k,2) + 1
+    k = ceiling( Rgxy2_avg )
+    if ( k == 0 ) cycle
+    if (k<0 .or. k>(floor(Lz/2)**2)) then
+      write(*,*) 'Wrong in star_Rgxy2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      cycle
+    end if
+    star_Rgxy2_dist(k,2) = star_Rgxy2_dist(k,2) + 1
+  end do
+  do i = 1,Ngl
+    call linear_Rg(i,Rg2_avg,Rgz2_avg,Rgxy2_avg)
+    k = ceiling( Rg2_avg )
+    if ( k == 0 ) cycle
+    if (k<0 .or. k>(floor(Lz/2)**2)) then
+      write(*,*) 'Wrong in linear_Rg2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      cycle
+    end if
+    linear_Rg2_dist(k,2) = linear_Rg2_dist(k,2) + 1
+    k = ceiling( Rgz2_avg )
+    if ( k == 0 ) cycle
+    if (k<0 .or. k>(floor(Lz/2)**2)) then
+      write(*,*) 'Wrong in linear_Rgz2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      cycle
+    end if
+    linear_Rgz2_dist(k,2) = linear_Rgz2_dist(k,2) + 1
+    k = ceiling( Rgxy2_avg )
+    if ( k == 0 ) cycle
+    if (k<0 .or. k>(floor(Lz/2)**2)) then
+      write(*,*) 'Wrong in linear_Rgxy2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      cycle
+    end if
+    linear_Rgxy2_dist(k,2) = linear_Rgxy2_dist(k,2) + 1
+  end do
+  !------------------------------------!
 
   !---------------ZhangFen-------------!
   do i = 1, Npe
@@ -1127,10 +1333,19 @@ subroutine histogram
     x = ceiling( asin( abs(rij1(3)) / sqrt(rr1) ) / (pi/2/SizeHist) )
     if ( x == 0 ) cycle
     if (x<0 .or. x>SizeHist) then
-      write(*,*) 'Wrong in phi_tot: x<0 or x>SizeHist!'
+      write(*,*) 'Wrong in alpha_stem: x<0 or x>SizeHist!'
       cycle
     end if
     alpha_stem(x,2) = alpha_stem(x,2) + 1 
+
+    call rij_and_rr(rij1, rr1, l, m)
+    x = ceiling( asin( abs(rij1(3)) / sqrt(rr1) ) / (pi/2/SizeHist) )
+    if ( x == 0 ) cycle
+    if (x<0 .or. x>SizeHist) then
+      write(*,*) 'Wrong in alpha_end: x<0 or x>SizeHist!'
+      cycle
+    end if
+    alpha_end(x,2) = alpha_end(x,2) + 1 
 
     call rij_and_rr(rij1, rr1, l, m)
     call rij_and_rr(rij2, rr2, k, l)
@@ -1138,7 +1353,7 @@ subroutine histogram
     x = ceiling( acos( (rr2+rr3-rr1)/sqrt(rr2*rr3)/2 ) / (pi/SizeHist) )
     if ( x == 0 ) cycle
     if (x<0 .or. x>SizeHist) then
-      write(*,*) 'Wrong in phi_tot: x<0 or x>SizeHist!'
+      write(*,*) 'Wrong in alpha_branch: x<0 or x>SizeHist!'
       cycle
     end if
     alpha_branch(x,2) = alpha_branch(x,2) + 1 
@@ -1351,7 +1566,56 @@ subroutine histogram
    
 end subroutine histogram
 
+subroutine star_Rg( i, Rg2, Rgz2, Rgxy2 )
+  use global_variables
+  implicit none
+  integer, intent(in) :: i
+  real*8, intent(out) :: Rg2
+  real*8, intent(out) :: Rgz2
+  real*8, intent(out) :: Rgxy2
+  integer :: j,k,l,m,n
+  real*8 :: rij(3),rr
 
+  l = arm*Nma+1
+  do j=1,l-1
+    do k=j+1,l
+      m=(i-1)*l+j
+      n=(i-1)*l+k
+      call rij_and_rr(rij,rr,m,n)
+      Rg2=Rg2+rr
+      Rgz2=Rgz2+rij(3)*rij(3)
+      Rgxy2=Rgxy2+rij(1)*rij(1)+rij(2)*rij(2)
+    end do
+  end do
+  Rg2 = Rg2 / (l+1) / (l+1)
+  Rgz2 = Rgz2 / (l+1) / (l+1)
+  Rgxy2 = Rgxy2 / (l+1) / (l+1)
+end subroutine star_Rg
+
+subroutine linear_Rg( i, Rg2, Rgz2, Rgxy2 )
+  use global_variables
+  implicit none
+  integer, intent(in) :: i
+  real*8, intent(out) :: Rg2
+  real*8, intent(out) :: Rgz2
+  real*8, intent(out) :: Rgxy2
+  integer :: j,k,m,n
+  real*8 :: rij(3),rr
+
+  do j=1,Nml-1
+    do k=j+1,Nml
+      m=Nta+(i-1)*Nml+j
+      n=Nta+(i-1)*Nml+k
+      call rij_and_rr(rij,rr,m,n)
+      Rg2=Rg2+rr
+      Rgz2=Rgz2+rij(3)*rij(3)
+      Rgxy2=Rgxy2+rij(1)*rij(1)+rij(2)*rij(2)
+    end do
+  end do
+  Rg2 = Rg2 / (Nml+1) / (Nml+1)
+  Rgz2 = Rgz2 / (Nml+1) / (Nml+1)
+  Rgxy2 = Rgxy2 / (Nml+1) / (Nml+1)
+end subroutine linear_Rg
 
 subroutine write_hist
   !--------------------------------------!
@@ -1371,17 +1635,40 @@ subroutine write_hist
   implicit none
   integer i,j
 
+  !----------------h_hist--------------!
+  open(28,file='./data/h_dist.txt')
+    do i = 1, SizeHist
+      write(28,280) i*Lz/SizeHist, linear_h_dist(i,2), star_h_dist(i,2), &
+                    star_end_h_dist(i,2)
+    end do
+  close(28)
+  280 format(4F17.8)
+  !------------------------------------!
+
+  !---------------Rg_hist--------------!
+  open(29,file='./data/Rg_dist.txt')
+    do i = 1, floor(Lz/2)**2
+      write(29,290) i*1., linear_Rg2_dist(i,2), linear_Rgz2_dist(i,2), &
+                    linear_Rgxy2_dist(i,2), star_Rg2_dist(i,2), &
+                    star_Rgz2_dist(i,2), star_Rgxy2_dist(i,2)
+    end do
+  close(29)
+  290 format(7F17.8)
+  !------------------------------------!
+
   !--------------ZhangFen--------------!
   open(30,file='./data/alpha_phi.txt')
     do i = 1, SizeHist
       phi_branch(i,1) = i*Lz/SizeHist
       alpha_stem(i,1) = i*90./SizeHist
       alpha_branch(i,1) = i*180./SizeHist
+      alpha_end(i,1) = i*90./SizeHist
       write(30,300) phi_branch(i,1), phi_branch(i,2),   alpha_stem(i,1),  &
-                    alpha_stem(i,2), alpha_branch(i,1), alpha_branch(i,2) 
+                    alpha_stem(i,2), alpha_branch(i,1), alpha_branch(i,2), &
+                    alpha_end(i,1), alpha_end(i,2) 
     end do
   close(30)
-  300 format(6F17.6)
+  300 format(8F17.6)
   !------------------------------------!
 
   open(31,file='./data/phi.txt')
@@ -1465,6 +1752,11 @@ subroutine write_hist
   open(75,file='./data/phi_2d91.txt')
   open(76,file='./data/phi_2d92.txt')
   open(77,file='./data/phi_2d93.txt')
+  open(78,file='./data/fene_f.txt')
+  open(79,file='./data/lj_force_PE.txt')
+  open(80,file='./data/lj_force_ions.txt')
+  open(81,file='./data/coulomb_f.txt')
+  open(82,file='./data/Bond_dist.txt')
     do i=1,SizeHist
       write(51,'(500I10)') (phi_zx(i,j),j=1,SizeHist) 
       write(52,'(500I10)') (phi_xy(i,j),j=1,SizeHist)  
@@ -1493,6 +1785,11 @@ subroutine write_hist
       write(75,'(500I10)') (phi_qzx(i,j),j=1,SizeHist)  
       write(76,'(500I10)') (phi_qxy(i,j),j=1,SizeHist)   
       write(77,'(500I10)') (phi_qyz(i,j),j=1,SizeHist)   
+      write(78,'(500I10)') (fene_f(i,j),j=1,SizeHist)   
+      write(79,'(500I10)') (lj_force_PE(i,j),j=1,SizeHist)   
+      write(80,'(500I10)') (lj_force_ions(i,j),j=1,SizeHist)   
+      write(81,'(500I10)') (coulomb_f(i,j),j=1,SizeHist)   
+      write(82,'(500I10)') (Bond_dist(i,j),j=1,SizeHist)   
     end do
   close(51)
   close(52)
@@ -1521,6 +1818,11 @@ subroutine write_hist
   close(75)
   close(76)
   close(77)
+  close(78)
+  close(79)
+  close(80)
+  close(81)
+  close(82)
 end subroutine write_hist
 
 

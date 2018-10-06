@@ -165,8 +165,8 @@ subroutine initialize_lj_parameters
   !allocate verlet list of LJ potential
   rho = NN / (Lx * Ly * Lz)
   v_verlet = 8.D0/3 * pi * rvl**3
-  allocate(  lj_pair_list(25*NN*ceiling(rho*v_verlet),2)  )
-  lj_pair_list = 0
+!   allocate(  lj_pair_list(25*NN*ceiling(rho*v_verlet),2)  )
+!   lj_pair_list = 0
   dr_max1 = 0
   npair1  = 0
 end subroutine initialize_lj_parameters
@@ -248,6 +248,50 @@ subroutine lj_verlet_list
             call rij_and_rr(rij,rsqr,i,j)
             if ( i/=j .and. rsqr<(rvl*rvl) ) then
               k=k+1
+            end if
+            j=cell_list(j)
+          end do
+        end do
+      end do
+    end do
+  end do
+  npair1=k
+  if ( allocated(lj_pair_list) ) deallocate(lj_pair_list)
+  allocate(lj_pair_list(npair1,2))
+  k=0
+  do i=1,NN
+    icel=int((pos(i,1)+Lx/2)/rcel1)
+    jcel=int((pos(i,2)+Ly/2)/rcel2)
+    kcel=int(pos(i,3)/rcel3)
+    do l=-1,1
+      if (icel+l .ge. ncel1) then
+        p=icel+l-ncel1
+      elseif(icel+l<0) then
+        p=icel+l+ncel1
+      else
+        p=icel+l
+      end if
+      do m=-1,1
+        if (jcel+m .ge. ncel2) then
+          q=jcel+m-ncel2
+        elseif(jcel+m<0) then
+          q=jcel+m+ncel2
+        else
+          q=jcel+m
+        end if
+        do n=-1,1
+          if (kcel+n .ge. ncel3) then
+            cycle
+          elseif(kcel+n<0) then
+            cycle
+          else
+            r=kcel+n
+          end if
+          j=hoc(p,q,r)
+          do while (j /= 0)
+            call rij_and_rr(rij,rsqr,i,j)
+            if ( i/=j .and. rsqr<(rvl*rvl) ) then
+              k=k+1
               lj_pair_list(k,1)=i
               lj_pair_list(k,2)=j
             end if
@@ -257,7 +301,6 @@ subroutine lj_verlet_list
       end do
     end do
   end do
-  npair1=k
 end subroutine lj_verlet_list
 
 
@@ -369,9 +412,10 @@ subroutine Initialize_ewald_parameters
   !allocate verlet list of real space
   rho = Nq / (Lx * Ly * Lz)
   v_verlet = 8.D0/3 * pi * rvc**3
-  if ( allocated(real_pair_list) ) deallocate(real_pair_list)
-  allocate( real_pair_list(25*Nq*ceiling(rho*v_verlet),2) )
-  real_pair_list = 0
+!   if ( allocated(real_pair_list) ) deallocate(real_pair_list)
+!   allocate( real_pair_list(25*Nq*ceiling(rho*v_verlet),2) )
+!   write(*,*) v_verlet,25*Nq*ceiling(rho*v_verlet)
+!   real_pair_list = 0
   dr_max2 = 0
 end subroutine Initialize_ewald_parameters
 
@@ -477,6 +521,52 @@ subroutine real_verlet_list
     cell_list(m)=hoc(icel,jcel,kcel)
     hoc(icel,jcel,kcel)=m
   end do
+  k=0
+  do m=1,Nq
+    i=charge(m)
+    icel=int((pos(i,1)+Lx/2)/rcel1)
+    jcel=int((pos(i,2)+Ly/2)/rcel2)
+    kcel=int(pos(i,3)/rcel3)
+    do u=-1,1
+      if (icel+u>=ncel1) then
+        p=icel+u-ncel1
+      elseif(icel+u<0) then
+        p=icel+u+ncel1
+      else
+        p=icel+u
+      end if
+      do v=-1,1
+        if (jcel+v>=ncel2) then
+          q=jcel+v-ncel2
+        elseif(jcel+v<0) then
+          q=jcel+v+ncel2
+        else
+          q=jcel+v
+        end if
+        do w=-1,1
+          if (kcel+w>=ncel3) then
+            cycle
+          elseif(kcel+w<0) then
+            cycle
+          else
+            r=kcel+w
+          end if
+          n=hoc(p,q,r)
+          do while (n /= 0)
+            j=charge(n)
+            call rij_and_rr(rij,rsqr,i,j)
+            if ( i/=j .and. rsqr<(rvc*rvc) ) then
+              k=k+1
+            end if
+            n=cell_list(n)
+          end do
+        end do
+      end do
+    end do
+  end do
+  npair2=k
+  if ( allocated(real_pair_list) ) deallocate(real_pair_list)
+  allocate(real_pair_list(npair2,2))
   k=0
   do m=1,Nq
     i=charge(m)
@@ -709,7 +799,7 @@ subroutine error_analysis
     close(60)
   600 format(6F17.6) 
   
-end subroutine
+end subroutine error_analysis
 
 
 subroutine Compute_Force
@@ -766,7 +856,7 @@ subroutine fene_force
   !-----------------------------------------!
   !Note: rij=ri-rj
   !-----------------------------------------!
-!   use input_output, only : write_pos, write_vel, write_acc
+ !   use input_output, only : write_pos, write_vel, write_acc
   use global_variables
   implicit none
   integer :: i,j,k,n
@@ -1004,9 +1094,82 @@ subroutine Standard_Ewald
   end do
 end subroutine Standard_Ewald
 
+subroutine force_distribution(fene_f,lj_force_PE,lj_force_ions, &
+                              coulomb_f,Bond_dist)
+  use global_variables
+  implicit none
+  integer, dimension(500,500), intent(inout) :: fene_f
+  integer, dimension(500,500), intent(inout) :: lj_force_PE
+  integer, dimension(500,500), intent(inout) :: lj_force_ions
+  integer, dimension(500,500), intent(inout) :: coulomb_f
+  integer, dimension(500,500), intent(inout) :: Bond_dist
+  integer :: i,j,k,l,m,n
+  real*8 :: rsqr, fff, hz, inv_r2, inv_r6
+  real*8, dimension(3) :: rjk,ff,rij
+
+  do i=1, N_bond
+    j=fene_list(i,1)
+    k=fene_list(i,2)
+    call rij_and_rr(rjk, rsqr, j, k)
+    ff = -kfene*R0_2/(R0_2-rsqr)*rjk
+    fff = abs(ff(3))
+    hz = ( pos(j,3) + pos(k,3) ) / 2
+    l = ceiling(hz/(Lz/500))
+    m = ceiling(fff/(50./500))
+    if (l>0 .and. l<=500 .and. m>0 .and. m<500) then
+      fene_f(l,m) = fene_f(l,m) + 1
+    end if
+    n = ceiling(sqrt(rsqr)/(sqrt(R0_2)/500))
+    if (l>0 .and. l<=500 .and. n>0 .and. n<500) then
+      Bond_dist(l,n) = Bond_dist(l,n) + 1
+    end if
+  end do
+
+  do k=1,npair1
+    i=lj_pair_list(k,1)
+    j=lj_pair_list(k,2)
+    call rij_and_rr(rij,rsqr,i,j)
+    if (rsqr<rcl*rcl) then
+      inv_r2=1/rsqr
+      inv_r6=inv_r2*inv_r2*inv_r2
+      ff = inv_r2*inv_r6*(inv_r6-0.5)*rij
+      fff = abs(ff(3))
+      hz = pos(i,3)
+      l = ceiling(hz/(Lz/500))
+      m = ceiling(fff/(50./500))
+      if (l>0 .and. l<=500 .and. m>0 .and. m<500) then
+        if (i<=Npe .and. j<=Npe) then
+          lj_force_PE(l,m) = lj_force_PE(l,m) + 1
+        elseif(i<=Npe .and. j>Npe) then
+          lj_force_ions(l,m) = lj_force_ions(l,m) + 1
+        end if
+      end if
+    end if
+  end do
+
+  if ( qq /= 0 .and. mod(step,multistep) == 0 ) then    
+    acc_c = 0
+    posq(:,:) = pos(charge,:)
+    call SPME_Ewald
+    call real_space
+    do i = 1, Npe
+      ff = acc_c(i,:)
+      fff = ff(3)
+      hz = pos(i,3)
+      l = ceiling(hz/(Lz/500))
+      m = nint(fff/(100./500)) + 250
+      if (l>0 .and. l<=500 .and. m>0 .and. m<500) then
+        coulomb_f(l,m) = coulomb_f(l,m) + 1
+      end if
+    end do
+  end if
+
+end subroutine force_distribution
+
 !
 !The following program are the SPME program.
 !
+
 subroutine SPME_Ewald
   !-----------------------------------------!
   !
