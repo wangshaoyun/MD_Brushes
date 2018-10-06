@@ -114,6 +114,7 @@ save
   real*8, private :: R_up3
   real*8, private :: R_down3
   real*8, private :: R_I3
+  real*8, private :: R_area
 contains
 
 subroutine initialize_parameters
@@ -734,12 +735,13 @@ subroutine height
   real*8 :: max_hs_end,min_hs_end,hs_avg_arm,hb_avg,he_avg,max_hs,min_hs
   real*8, dimension(3) :: rij
   real*8, dimension(3) :: rij1,rij2,rij3,f1
-  real*8 :: h1
+  real*8 :: h1,h_avg
 
   !------------up and down-------------!
   R_up1   = 0
   R_down1 = 0
   R_I1    = 0
+  R_area = 0
   hb_avg = 0
   n      = arm * Nma + 1 
   do i = 1, Nga
@@ -768,14 +770,18 @@ subroutine height
     else
       R_I1 = R_I1 + 1
     end if
+    if ( pos((i-1)*n + Nma + 1, 3) > hb_avg ) then
+      R_area = R_area + 1
+    end if
   end do
   R_up1   = R_up1 / Nga
   R_down1 = R_down1 / Nga
   R_I1    = R_I1 / Nga
+  R_area  = R_area / Nga
 
-  R_up1   = 0
-  R_down1 = 0
-  R_I1    = 0
+  R_up2   = 0
+  R_down2 = 0
+  R_I2    = 0
   he_avg = 0
   n      = arm * Nma + 1 
   do i = 1, Nga
@@ -808,6 +814,42 @@ subroutine height
   R_up2   = R_up2 / Nga
   R_down2 = R_down2 / Nga
   R_I2    = R_I2 / Nga
+
+  R_up3   = 0
+  R_down3 = 0
+  R_I3    = 0
+  h_avg = 0
+  n      = arm * Nma + 1 
+  do i = 1, Nga
+    do j = 1, n
+      h_avg = h_avg + pos( (i-1)*n+j, 3 ) 
+    end do
+  end do
+  h_avg = h_avg / Nga / n
+  do i = 1, Nga
+    max_hs = 0
+    min_hs = Lz
+    do j = 2, arm
+      m = (i-1)*n + j*Nma + 1
+      h1 = pos(m, 3)
+      if ( max_hs < h1 ) then
+        max_hs = h1
+      end if
+      if ( min_hs > h1 ) then
+        min_hs = h1
+      end if
+    end do
+    if (min_hs > h_avg) then
+      R_up3 = R_up3 + 1
+    elseif (max_hs < h_avg) then
+      R_down3 = R_down3 + 1
+    else
+      R_I3 = R_I3 + 1
+    end if
+  end do
+  R_up3   = R_up3 / Nga
+  R_down3 = R_down3 / Nga
+  R_I3    = R_I3 / Nga
   !------------------------------------!
 
   h_avg=0
@@ -898,7 +940,8 @@ subroutine height
     hs_avg=hs_avg/(Nga*(arm*Nma+1))
     hs_max=hs_max+maxh
     hs_avg_arm=hs_avg_arm/(arm*Nma+1)
-    if (max_hs_end<hs_avg) then
+    hs_end=hs_end/(Nga*(arm-1))
+    if (max_hs_end<hs_end) then
       R_down3=R_down3+1
       do k=2,Nma+1
         m=(i-1)*(arm*Nma+1)+k
@@ -937,7 +980,7 @@ subroutine height
         end if
         delta_angle2(p,2)=delta_angle2(p,2)+1
       end do
-    elseif (min_hs_end>hs_avg) then
+    elseif (min_hs_end>hs_end) then
       R_up3=R_up3+1
       do k=2,Nma+1
         m=(i-1)*(arm*Nma+1)+k
@@ -1018,7 +1061,6 @@ subroutine height
     end if    
   end do
   hs_max=hs_max/Nga
-  hs_end=hs_end/(Nga*(arm-1))
   hs_branch=hs_branch/Nga
   R_up3=R_up3/Nga
   R_down3=R_down3/Nga
@@ -1161,9 +1203,9 @@ subroutine write_height(j)
 
   open(35,position='append', file='./data/up_and_down.txt')
     write(35,350) 1.*j, R_up1, R_down1, R_I1, R_up2, R_down2, R_I2,  &
-                        R_up3, R_down3, R_I3
+                        R_up3, R_down3, R_I3, R_area
   close(35)
-  350 format(10F15.6)
+  350 format(11F15.6)
 !     open(36,position='append', file='./data/height.txt')
 !       write(36,361) 1.*j, h_avg
 !     close(36)
@@ -1181,7 +1223,7 @@ subroutine write_height(j)
     write(36,370) 1.*j, kenetic_energy, R_up3, R_down3, R_I3
   close(36)
   360 format(9F17.6)
-  370 format(4F17.6)
+  370 format(5F17.6)
 end subroutine write_height
 
 
