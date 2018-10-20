@@ -1305,50 +1305,38 @@ subroutine histogram
   do i = 1, Nga
     call star_Rg(i,Rg2_avg,Rgz2_avg,Rgxy2_avg)
     k = ceiling( Rg2_avg )
-    if ( k == 0 ) cycle
-    if (k<0 .or. k>(floor(Lz/2)**2)) then
-      write(*,*) 'Wrong in star_Rg2_dist: k<0 or k>(floor(Lz/2)**2)!'
-      cycle
+    if (k>0 .and. k<(floor(Lz/2)**2)) then
+!       write(*,*) 'Wrong in star_Rg2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      star_Rg2_dist(k,2) = star_Rg2_dist(k,2) + 1
     end if
-    star_Rg2_dist(k,2) = star_Rg2_dist(k,2) + 1
     k = ceiling( Rgz2_avg )
-    if ( k == 0 ) cycle
-    if (k<0 .or. k>(floor(Lz/2)**2)) then
-      write(*,*) 'Wrong in star_Rgz2_dist: k<0 or k>(floor(Lz/2)**2)!'
-      cycle
+    if (k>0 .and. k<(floor(Lz/2)**2)) then
+!       write(*,*) 'Wrong in star_Rgz2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      star_Rgz2_dist(k,2) = star_Rgz2_dist(k,2) + 1
     end if
-    star_Rgz2_dist(k,2) = star_Rgz2_dist(k,2) + 1
     k = ceiling( Rgxy2_avg )
-    if ( k == 0 ) cycle
-    if (k<0 .or. k>(floor(Lz/2)**2)) then
-      write(*,*) 'Wrong in star_Rgxy2_dist: k<0 or k>(floor(Lz/2)**2)!'
-      cycle
+    if (k>0 .and. k<(floor(Lz/2)**2)) then
+!       write(*,*) 'Wrong in star_Rgxy2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      star_Rgxy2_dist(k,2) = star_Rgxy2_dist(k,2) + 1
     end if
-    star_Rgxy2_dist(k,2) = star_Rgxy2_dist(k,2) + 1
   end do
   do i = 1,Ngl
     call linear_Rg(i,Rg2_avg,Rgz2_avg,Rgxy2_avg)
     k = ceiling( Rg2_avg )
-    if ( k == 0 ) cycle
-    if (k<0 .or. k>(floor(Lz/2)**2)) then
-      write(*,*) 'Wrong in linear_Rg2_dist: k<0 or k>(floor(Lz/2)**2)!'
-      cycle
+    if (k>0 .and. k<(floor(Lz/2)**2)) then
+!       write(*,*) 'Wrong in linear_Rg2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      linear_Rg2_dist(k,2) = linear_Rg2_dist(k,2) + 1
     end if
-    linear_Rg2_dist(k,2) = linear_Rg2_dist(k,2) + 1
     k = ceiling( Rgz2_avg )
-    if ( k == 0 ) cycle
-    if (k<0 .or. k>(floor(Lz/2)**2)) then
-      write(*,*) 'Wrong in linear_Rgz2_dist: k<0 or k>(floor(Lz/2)**2)!'
-      cycle
+    if (k>0 .and. k<(floor(Lz/2)**2)) then
+!       write(*,*) 'Wrong in linear_Rgz2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      linear_Rgz2_dist(k,2) = linear_Rgz2_dist(k,2) + 1
     end if
-    linear_Rgz2_dist(k,2) = linear_Rgz2_dist(k,2) + 1
     k = ceiling( Rgxy2_avg )
-    if ( k == 0 ) cycle
-    if (k<0 .or. k>(floor(Lz/2)**2)) then
-      write(*,*) 'Wrong in linear_Rgxy2_dist: k<0 or k>(floor(Lz/2)**2)!'
-      cycle
+    if (k>0 .and. k<(floor(Lz/2)**2)) then
+!       write(*,*) 'Wrong in linear_Rgxy2_dist: k<0 or k>(floor(Lz/2)**2)!'
+      linear_Rgxy2_dist(k,2) = linear_Rgxy2_dist(k,2) + 1
     end if
-    linear_Rgxy2_dist(k,2) = linear_Rgxy2_dist(k,2) + 1
   end do
   !------------------------------------!
 
@@ -1618,6 +1606,9 @@ subroutine star_Rg( i, Rg2, Rgz2, Rgxy2 )
   integer :: j,k,l,m,n
   real*8 :: rij(3),rr
 
+  Rg2 = 0
+  Rgz2 = 0
+  Rgxy2 = 0
   l = arm*Nma+1
   do j=1,l-1
     do k=j+1,l
@@ -1644,6 +1635,9 @@ subroutine linear_Rg( i, Rg2, Rgz2, Rgxy2 )
   integer :: j,k,m,n
   real*8 :: rij(3),rr
 
+  Rg2 = 0
+  Rgz2 = 0
+  Rgxy2 = 0
   do j=1,Nml-1
     do k=j+1,Nml
       m=Nta+(i-1)*Nml+j
