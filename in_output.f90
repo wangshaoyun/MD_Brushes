@@ -44,11 +44,11 @@ save
   real*8,  allocatable, dimension(:,:), private :: star_Rgz2_dist
   real*8,  allocatable, dimension(:,:), private :: star_Rgxy2_dist
   real*8,  allocatable, dimension(:,:), private :: star_end_h_dist
-  integer,  allocatable, dimension(:,:), private :: fene_f
-  integer,  allocatable, dimension(:,:), private :: lj_force_PE
-  integer,  allocatable, dimension(:,:), private :: lj_force_ions
-  integer,  allocatable, dimension(:,:), private :: coulomb_f
-  integer,  allocatable, dimension(:,:), private :: Bond_dist
+  integer, allocatable, dimension(:,:), private :: fene_f
+  integer, allocatable, dimension(:,:), private :: lj_force_PE
+  integer, allocatable, dimension(:,:), private :: lj_force_ions
+  integer, allocatable, dimension(:,:), private :: coulomb_f
+  integer, allocatable, dimension(:,:), private :: Bond_dist
   integer, allocatable, dimension(:,:), private :: phi_zx
   integer, allocatable, dimension(:,:), private :: phi_xy
   integer, allocatable, dimension(:,:), private :: phi_yz
@@ -175,7 +175,8 @@ subroutine read_data
     read(10,*) Nga
     read(10,*) Nml
     read(10,*) Ngl
-    read(10,*) man
+    read(10,*) man_l
+    read(10,*) man_s
     read(10,*) R_bond
     read(10,*) StepNum0           
     read(10,*) StepNum            
@@ -240,8 +241,9 @@ subroutine data_operation
   if ( abs(qq) == 0 ) then
     Nq_PE = 0
   else
-    if ( man /= 0 ) then
-      Nq_PE = (Ntl - Ngl + arm_q * Nma * Nga) / man
+    if ( man_l /= 0 .and. man_s /= 0) then
+      Nq_PE = floor( 1.0*(Nml - 1) / man_l ) * Ngl + &
+              floor( 1.0*( Nma) / man_s ) * arm_q * Nga
     else
       Nq_PE = 0
     end if

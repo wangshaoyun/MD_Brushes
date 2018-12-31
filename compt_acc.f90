@@ -444,7 +444,7 @@ subroutine build_charge
   do i=1,Nga
     if ( charged_arm(1) /= 0 ) then
       do k = 2, Nma+1     !the chain anchored to the plate
-        if ( mod(k-1, man) == 0 ) then
+        if ( mod( k-1, man_s ) == 0 ) then
           l = l + 1
           charge(l) = (i-1) * (arm*Nma+1) + k
         end if
@@ -453,7 +453,7 @@ subroutine build_charge
     do j = 2, arm  
       if (charged_arm(j) /=0 ) then 
         do k = 1, Nma
-          if ( mod( k, man ) == 0) then
+          if ( mod( k, man_s ) == 0) then
             l = l + 1
             charge(l) = (i-1)*(arm*Nma+1) + ((j-1)*Nma+1) + k
           end if
@@ -464,7 +464,7 @@ subroutine build_charge
   !linear brushes
   do i=1,Ngl
     do j=2,Nml
-      if (mod(j-1,man)==0) then
+      if (mod( j-1, man_l )==0) then
         l=l+1
         charge(l)=Nta+(i-1)*Nml+j
       end if
