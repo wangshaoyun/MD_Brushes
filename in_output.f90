@@ -737,7 +737,7 @@ subroutine height
   real*8 :: max_hs_end,min_hs_end,hs_avg_arm,hb_avg,he_avg,max_hs,min_hs
   real*8, dimension(3) :: rij
   real*8, dimension(3) :: rij1,rij2,rij3,f1
-  real*8 :: h1,h_avg
+  real*8 :: h1
 
   !------------up and down-------------!
   R_up1   = 0
@@ -784,8 +784,8 @@ subroutine height
   R_up2   = 0
   R_down2 = 0
   R_I2    = 0
-  he_avg = 0
-  n      = arm * Nma + 1 
+  he_avg  = 0
+  n       = arm * Nma + 1 
   do i = 1, Nga
     do j = 2, arm
       he_avg = he_avg + pos( (i-1)*n+Nma*j+1, 3 ) 
@@ -939,10 +939,8 @@ subroutine height
       end if
     end do
     hs_avg=hs_avg+hs_avg_arm
-    hs_avg=hs_avg/(Nga*(arm*Nma+1))
     hs_max=hs_max+maxh
     hs_avg_arm=hs_avg_arm/(arm*Nma+1)
-    hs_end=hs_end/(Nga*(arm-1))
     if (max_hs_end<hs_end) then
       R_down3=R_down3+1
       do k=2,Nma+1
@@ -1062,6 +1060,8 @@ subroutine height
       end do
     end if    
   end do
+  hs_end=hs_end/(Nga*(arm-1))
+  hs_avg=hs_avg/(Nga*(arm*Nma+1))
   hs_max=hs_max/Nga
   hs_branch=hs_branch/Nga
   R_up3=R_up3/Nga
