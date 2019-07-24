@@ -14,8 +14,9 @@ save
   real*8,  allocatable, dimension(:,:), private :: phi_s
   real*8,  allocatable, dimension(:,:), private :: phi_sb
   real*8,  allocatable, dimension(:,:), private :: phi_se
-  real*8,  allocatable, dimension(:,:), private :: phi_a
-  real*8,  allocatable, dimension(:,:), private :: phi_i
+  real*8,  allocatable, dimension(:,:), private :: phi_a    ! anions (p+salt)
+  real*8,  allocatable, dimension(:,:), private :: phi_i    ! ions(polymer)
+  real*8,  allocatable, dimension(:,:), private :: phi_is   ! salt ions
   real*8,  allocatable, dimension(:,:), private :: phi_q
   real*8,  allocatable, dimension(:,:), private :: delta_angle1
   real*8,  allocatable, dimension(:,:), private :: delta_angle2
@@ -67,10 +68,13 @@ save
   integer, allocatable, dimension(:,:), private :: phi_sezx
   integer, allocatable, dimension(:,:), private :: phi_sexy
   integer, allocatable, dimension(:,:), private :: phi_seyz
-  integer, allocatable, dimension(:,:), private :: phi_azx
+  integer, allocatable, dimension(:,:), private :: phi_is_zx ! salt ions
+  integer, allocatable, dimension(:,:), private :: phi_is_xy
+  integer, allocatable, dimension(:,:), private :: phi_is_yz
+  integer, allocatable, dimension(:,:), private :: phi_azx   ! anions (p+salt)
   integer, allocatable, dimension(:,:), private :: phi_axy
   integer, allocatable, dimension(:,:), private :: phi_ayz
-  integer, allocatable, dimension(:,:), private :: phi_izx
+  integer, allocatable, dimension(:,:), private :: phi_izx   ! ions (polymer)
   integer, allocatable, dimension(:,:), private :: phi_ixy
   integer, allocatable, dimension(:,:), private :: phi_iyz
   integer, allocatable, dimension(:,:), private :: phi_qzx
@@ -314,6 +318,7 @@ subroutine data_allocate
   allocate( phi_se(SizeHist,2)          )
   allocate( phi_a(SizeHist,2)           )
   allocate( phi_i(SizeHist,2)           )
+  allocate( phi_is(SizeHist,2)          )
   allocate( phi_q(SizeHist,2)           )
   allocate( delta_angle1(SizeHist,2)    )
   allocate( delta_angle2(SizeHist,2)    )
@@ -365,6 +370,9 @@ subroutine data_allocate
   allocate( phi_sezx(SizeHist,SizeHist) )
   allocate( phi_sexy(SizeHist,SizeHist) )
   allocate( phi_seyz(SizeHist,SizeHist) )
+  allocate( phi_is_zx(SizeHist,SizeHist))
+  allocate( phi_is_xy(SizeHist,SizeHist))
+  allocate( phi_is_yz(SizeHist,SizeHist))
   allocate( phi_azx(SizeHist,SizeHist)  )
   allocate( phi_axy(SizeHist,SizeHist)  )
   allocate( phi_ayz(SizeHist,SizeHist)  )
@@ -383,6 +391,7 @@ subroutine data_allocate
   phi_se       = 0
   phi_a        = 0
   phi_i        = 0
+  phi_is       = 0
   phi_q        = 0
   delta_angle1 = 0
   delta_angle2 = 0
@@ -434,6 +443,9 @@ subroutine data_allocate
   phi_sezx     = 0
   phi_sexy     = 0
   phi_seyz     = 0
+  phi_is_zx    = 0
+  phi_is_xy    = 0
+  phi_is_yz    = 0
   phi_azx      = 0
   phi_axy      = 0
   phi_ayz      = 0
@@ -518,7 +530,7 @@ subroutine continue_read_data(l)
   integer, intent(out) :: l
   integer :: i,j
   real*8, dimension(SizeHist,8)  :: alpha_phi
-  real*8, dimension(SizeHist,10) :: phi
+  real*8, dimension(SizeHist,11) :: phi
   real*8, dimension(SizeHist,8)  :: theta
   real*8, dimension(2*Nma,4)     :: force
   real*8, dimension(SizeHist,4)  :: force1
@@ -562,7 +574,7 @@ subroutine continue_read_data(l)
       alpha_stem(:,2)   = alpha_phi(:,4)
       alpha_branch(:,2) = alpha_phi(:,6)
       alpha_end(:,2)    = alpha_phi(:,8)
-    read(20,*) ((phi(i,j),j=1,10),i=1,SizeHist)
+    read(20,*) ((phi(i,j),j=1,11),i=1,SizeHist)
       phi_tot(:,2)= phi(:,2)
       phi_l(:,2)  = phi(:,3)
       phi_le(:,2) = phi(:,4)
@@ -572,6 +584,7 @@ subroutine continue_read_data(l)
       phi_a(:,2)  = phi(:,8)
       phi_i(:,2)  = phi(:,9)
       phi_q(:,2)  = phi(:,10)
+      phi_is(:,2) = phi(:,11)
     read(21,*) ((theta(i,j),j=1,8),i=1,SizeHist)
       theta_l(:,2)=theta(:,2)
       theta_lz(:,2)=theta(:,3)
@@ -641,6 +654,9 @@ subroutine continue_read_data(l)
   open(42,file='./data/phi_2d81.txt')
   open(43,file='./data/phi_2d82.txt')
   open(44,file='./data/phi_2d83.txt')
+  open(62,file='./data/phi_2d84.txt')
+  open(63,file='./data/phi_2d85.txt')
+  open(64,file='./data/phi_2d86.txt')
   open(45,file='./data/phi_2d91.txt')
   open(46,file='./data/phi_2d92.txt')
   open(47,file='./data/phi_2d93.txt')
@@ -673,6 +689,9 @@ subroutine continue_read_data(l)
     read(42,*) ((phi_izx(i,j),j=1,SizeHist),i=1,SizeHist)
     read(43,*) ((phi_ixy(i,j),j=1,SizeHist),i=1,SizeHist)
     read(44,*) ((phi_iyz(i,j),j=1,SizeHist),i=1,SizeHist)
+    read(62,*) ((phi_is_zx(i,j),j=1,SizeHist),i=1,SizeHist)
+    read(63,*) ((phi_is_xy(i,j),j=1,SizeHist),i=1,SizeHist)
+    read(64,*) ((phi_is_yz(i,j),j=1,SizeHist),i=1,SizeHist)
     read(45,*) ((phi_qzx(i,j),j=1,SizeHist),i=1,SizeHist)
     read(46,*) ((phi_qxy(i,j),j=1,SizeHist),i=1,SizeHist)
     read(47,*) ((phi_qyz(i,j),j=1,SizeHist),i=1,SizeHist)
@@ -689,6 +708,9 @@ subroutine continue_read_data(l)
   close(47)
   close(46)
   close(45)
+  close(64)
+  close(63)
+  close(62)
   close(44)
   close(43)
   close(42)
@@ -1446,10 +1468,12 @@ subroutine histogram
       cycle
     end if
     phi_q(k,2)=phi_q(k,2)+pos(charge(i),4)
-    if ( i<= Nq/(nint(abs(qq))+1) ) then    !ions
+    if ( i <= Nq_pe ) then                   !ions
       phi_i(k,2)=phi_i(k,2)+1.
+    elseif ( i > Nq - Nq_salt_ions ) then
+      phi_is(k,2) = phi_is(k,2) + 1
     else                                    !aions
-      phi_a(k,2)=phi_a(k,2)+1.
+      phi_a(k,2) = phi_a(k,2) + 1.
     end if
   end do
   !!!!!!!!!!!!!!!!!!!!!!!!1d_theta_distribution!!!!!!!!!!!!!!!!!!!!!
@@ -1585,10 +1609,14 @@ subroutine histogram
     phi_qzx(x,z)=phi_qzx(x,z)+pos(i,4)
     phi_qxy(x,y)=phi_qxy(x,y)+pos(i,4)
     phi_qyz(y,z)=phi_qyz(y,z)+pos(i,4)
-    if (i<=Nq/(nint(abs(qq))+1)) then
+    if (i<=Nq_PE) then
       phi_izx(x,z)=phi_izx(x,z)+1
       phi_ixy(x,y)=phi_ixy(x,y)+1
       phi_iyz(y,z)=phi_iyz(y,z)+1
+    elseif ( i > Nq - Nq_salt_ions ) then
+      phi_is_zx(x,z)=phi_is_zx(x,z)+1
+      phi_is_xy(x,y)=phi_is_xy(x,y)+1
+      phi_is_yz(y,z)=phi_is_yz(y,z)+1      
     else
       phi_azx(x,z)=phi_azx(x,z)+1
       phi_axy(x,y)=phi_axy(x,y)+1
@@ -1714,9 +1742,9 @@ subroutine write_hist
       phi_tot(i,1)=i*Lz/SizeHist
       write(31,340) phi_tot(i,1),phi_tot(i,2),phi_l(i,2),phi_le(i,2),  &
                     phi_s(i,2),phi_sb(i,2),phi_se(i,2), phi_a(i,2),    &
-                    phi_i(i,2), phi_q(i,2)      
+                    phi_i(i,2), phi_q(i,2), phi_is(i,2)    
     end do
-    340 format(10F17.6)
+    340 format(11F17.6)
   close(31)
   open(32,file='./data/theta.txt')
     do i=1,SizeHist
@@ -1787,6 +1815,9 @@ subroutine write_hist
   open(72,file='./data/phi_2d81.txt')
   open(73,file='./data/phi_2d82.txt')
   open(74,file='./data/phi_2d83.txt')
+  open(92,file='./data/phi_2d84.txt')
+  open(93,file='./data/phi_2d85.txt')
+  open(94,file='./data/phi_2d86.txt')
   open(75,file='./data/phi_2d91.txt')
   open(76,file='./data/phi_2d92.txt')
   open(77,file='./data/phi_2d93.txt')
@@ -1820,6 +1851,9 @@ subroutine write_hist
       write(72,'(500I10)') (phi_izx(i,j),j=1,SizeHist)  
       write(73,'(500I10)') (phi_ixy(i,j),j=1,SizeHist) 
       write(74,'(500I10)') (phi_iyz(i,j),j=1,SizeHist) 
+      write(92,'(500I10)') (phi_is_zx(i,j),j=1,SizeHist)  
+      write(93,'(500I10)') (phi_is_xy(i,j),j=1,SizeHist) 
+      write(94,'(500I10)') (phi_is_yz(i,j),j=1,SizeHist) 
       write(75,'(500I10)') (phi_qzx(i,j),j=1,SizeHist)  
       write(76,'(500I10)') (phi_qxy(i,j),j=1,SizeHist)   
       write(77,'(500I10)') (phi_qyz(i,j),j=1,SizeHist)   
@@ -1853,6 +1887,9 @@ subroutine write_hist
   close(72)
   close(73)
   close(74)
+  close(92)
+  close(93)
+  close(94)
   close(75)
   close(76)
   close(77)
