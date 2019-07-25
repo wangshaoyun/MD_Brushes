@@ -7,6 +7,9 @@ save
   real*8,  allocatable, dimension(:,:), private :: alpha_stem
   real*8,  allocatable, dimension(:,:), private :: alpha_branch
   real*8,  allocatable, dimension(:,:), private :: alpha_end
+  ! radial distribution function
+  real*8,  allocatable, dimension(:,:), private :: gr_ps
+  real*8,  allocatable, dimension(:,:), private :: gr_p_xy
   !Histogram
   real*8,  allocatable, dimension(:,:), private :: phi_tot
   real*8,  allocatable, dimension(:,:), private :: phi_l
@@ -309,6 +312,10 @@ subroutine data_allocate
   allocate( alpha_branch(SizeHist,2)    )
   allocate( alpha_end(SizeHist,2)    )
   !
+  !radial distribution function
+  allocate( gr_ps(SizeHist, 2) )
+  allocate( gr_p_xy(SizeHist,2) )
+  !
   !Histogram
   allocate( phi_tot(SizeHist,2)         )
   allocate( phi_l(SizeHist,2)           )
@@ -382,6 +389,9 @@ subroutine data_allocate
   allocate( phi_qzx(SizeHist,SizeHist)  )
   allocate( phi_qxy(SizeHist,SizeHist)  )
   allocate( phi_qyz(SizeHist,SizeHist)  )
+  !initialize radial distribution function
+  gr_ps   = 0
+  gr_p_xy = 0
   !initialize histogram
   phi_tot      = 0
   phi_l        = 0
@@ -529,6 +539,7 @@ subroutine continue_read_data(l)
   use global_variables
   integer, intent(out) :: l
   integer :: i,j
+  real*8, dimension(SizeHist,3)  :: grr
   real*8, dimension(SizeHist,8)  :: alpha_phi
   real*8, dimension(SizeHist,11) :: phi
   real*8, dimension(SizeHist,8)  :: theta
@@ -559,6 +570,7 @@ subroutine continue_read_data(l)
   theta = 0
   force = 0
   delta_angle=0
+  open(18, file='./data/gr.txt')
   open(19,file='./data/alpha_phi.txt')
   open(20,file='./data/phi.txt')
   open(21,file='./data/theta.txt')
@@ -569,6 +581,9 @@ subroutine continue_read_data(l)
   open(26,file='./data/force_star1.txt')
   open(27,file='./data/Rg_dist.txt')
   open(28,file='./data/h_dist.txt')
+    read(18,*) ((grr(i,j),j=1,3),i=1,SizeHist)
+      gr_ps(:,2) = grr(:,2)
+      gr_p_xy(:,2) = grr(:,3)
     read(19,*) ((alpha_phi(i,j),j=1,8),i=1,SizeHist)
       phi_branch(:,2)   = alpha_phi(:,2)
       alpha_stem(:,2)   = alpha_phi(:,4)
@@ -628,6 +643,7 @@ subroutine continue_read_data(l)
   close(21)
   close(20)
   close(19)
+  close(18)
   !
   !read histogram
   open(21,file='./data/phi_2d11.txt')
@@ -1270,11 +1286,12 @@ subroutine histogram
   implicit none
   integer :: i, j, k, l, m, n, p, q, r, x, y, z
   real*8, dimension(3) :: rij1,rij2,rij3,f1
+  real*8, allocatable, dimension(:,:) :: r_center
   real*8 :: rsqr,theta,rr1,rr2,rr3,he_min,he_max,hb
-  real*8 :: h_avg, Rg2_avg, Rgz2_avg, Rgxy2_avg
+  real*8 :: h_avg, Rg2_avg, Rgz2_avg, Rgxy2_avg, del_r
 
   call force_distribution(fene_f,lj_force_PE,lj_force_ions,coulomb_f,Bond_dist)
-  
+
   !----------------h_dist--------------!
   n = arm*Nma + 1
   do i = 1, Nga
@@ -1414,7 +1431,63 @@ subroutine histogram
 
   end do
   !------------------------------------!
-  
+
+  !!!!!!!!!!!!!!!!!!!!!!!!radial_distribution!!!!!!!!!!!!!!!!!!!!!
+  !!-------------------gr_ps-----------------!
+  do i = 1, Nq_salt_ions
+    do j = 1, Nq_PE
+      k = i + NN - Nq_salt_ions
+      l = charge(j)
+      call rij_and_rr(rij1, rr1, k, l)
+      del_r = Lx/SizeHist/2
+      m = floor( sqrt(rr1) / del_r ) + 1
+      if ( sqrt(rr1) < Lx/2 ) then
+        gr_ps( m, 2 ) = gr_ps( m, 2 ) + 1/(4*pi*rr1*Nq_PE*Nq_salt_ions*del_r) 
+      end if
+    end do
+  end do
+  !!-------------------gr_p_xy-----------------!
+  allocate(r_center(N_anchor,3))
+  r_center = 0
+  do i = 1, Nga
+    do j = 1, arm
+      do k = 1, Nma
+        l = (i-1)*(arm*Nma) + (j-1)*Nma + k
+        r_center(i,:) = r_center(i,:) + pos(l,:)
+      end do
+    end do
+    r_center(i,:) = r_center(i,:) / (arm*Nma)
+  end do
+  do i = Nga+1, N_anchor
+    do j = 1, Nml
+      k = Nga*arm*Nma + (i-1)*Nml + j 
+      r_center(i,:) = r_center(i,:) + pos(k,:)
+    end do
+    r_center(i,:) = r_center(i,:) / Nml
+  end do
+
+  do i = 1, N_anchor
+    do j = i+1, N_anchor
+      rij1 = r_center(i,:) - r_center(j,:)
+      if ( rij1(1) > Lx/2 ) then
+        rij1(1) = rij1(1) - Lx
+      elseif( rij1(1) <= -Lx/2 ) then
+        rij1(1) = rij1(1) + Lx
+      end if
+      if ( rij1(2) > Ly/2 ) then
+        rij1(2) = rij1(2) - Ly
+      elseif( rij1(2) <= -Ly/2 ) then
+        rij1(2) = rij1(2) + Ly
+      end if
+      rr1 = sqrt( rij1(1)*rij1(1) + rij1(2)*rij1(2) )
+      del_r = Lx/SizeHist/2
+      m = floor( rr1 / del_r ) + 1
+      if ( rr1 < Lx / 2 ) then
+        gr_p_xy( m, : ) = gr_p_xy( m, : ) + 1/(pi*rr1*N_anchor*N_anchor*del_r)
+      end if
+    end do
+  end do
+  deallocate(r_center)
   !!!!!!!!!!!!!!!!!!!!!!!!1d_height_distribution!!!!!!!!!!!!!!!!!!!!!
   !!-------------------phi_tot-----------------!
   do i=1,Npe
@@ -1737,6 +1810,13 @@ subroutine write_hist
   300 format(8F17.6)
   !------------------------------------!
 
+  open(29, file='./data/gr.txt')
+    do i = 1, SizeHist
+      write(29,291) i*Lz/SizeHist/2, gr_ps(i,2), gr_p_xy(i,2)
+    end do
+    291 format(3F17.6)
+  close(29)
+
   open(31,file='./data/phi.txt')
     do i=1,SizeHist
       phi_tot(i,1)=i*Lz/SizeHist
@@ -1746,6 +1826,7 @@ subroutine write_hist
     end do
     340 format(11F17.6)
   close(31)
+
   open(32,file='./data/theta.txt')
     do i=1,SizeHist
       theta_l(i,1)=i*pi/SizeHist
