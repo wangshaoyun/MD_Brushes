@@ -19,8 +19,8 @@ save
   integer :: Nq       !Total charge in the system
   integer :: NN       !Total particles in the system
   integer :: N_anchor !Anchored chains
-  integer :: man_l      !Manning effect: every man pariticle have one charge
-  integer :: man_s      !Manning effect: star chains
+  integer :: man_l    !Manning effect: every man pariticle have one charge
+  integer :: man_s    !Manning effect: star chains
   integer :: Nq_salt_ions !Charged salt ions, which not include anions.
   real*8  :: Lx       !Length of cell in x direction
   real*8  :: Ly       !Length of cell in y direction
