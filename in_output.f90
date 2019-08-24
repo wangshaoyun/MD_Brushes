@@ -9,6 +9,8 @@ save
   real*8,  allocatable, dimension(:,:), private :: alpha_end
   ! radial distribution function
   real*8,  allocatable, dimension(:,:), private :: gr_ps
+  real*8,  allocatable, dimension(:,:), private :: gr_s_sa
+  real*8,  allocatable, dimension(:,:), private :: gr_s_pa
   real*8,  allocatable, dimension(:,:), private :: gr_p_xy
   !Histogram
   real*8,  allocatable, dimension(:,:), private :: phi_tot
@@ -17,9 +19,9 @@ save
   real*8,  allocatable, dimension(:,:), private :: phi_s
   real*8,  allocatable, dimension(:,:), private :: phi_sb
   real*8,  allocatable, dimension(:,:), private :: phi_se
-  real*8,  allocatable, dimension(:,:), private :: phi_a   ! anions (p+salt)
-  real*8,  allocatable, dimension(:,:), private :: phi_as   ! anions (p+salt)
-  real*8,  allocatable, dimension(:,:), private :: phi_ap   ! anions (p+salt)
+  real*8,  allocatable, dimension(:,:), private :: phi_a    ! anions (p+salt)
+  real*8,  allocatable, dimension(:,:), private :: phi_as   ! anions (salt)
+  real*8,  allocatable, dimension(:,:), private :: phi_ap   ! anions (p)
   real*8,  allocatable, dimension(:,:), private :: phi_i    ! ions(polymer)
   real*8,  allocatable, dimension(:,:), private :: phi_is   ! salt ions
   real*8,  allocatable, dimension(:,:), private :: phi_q
@@ -321,7 +323,9 @@ subroutine data_allocate
   allocate( alpha_end(SizeHist,2)    )
   !
   !radial distribution function
-  allocate( gr_ps(SizeHist, 2) )
+  allocate( gr_ps(SizeHist, 2)  )
+  allocate( gr_s_sa(SizeHist,2) )
+  allocate( gr_s_pa(SizeHist,2) )
   allocate( gr_p_xy(SizeHist,2) )
   !
   !Histogram
@@ -407,6 +411,8 @@ subroutine data_allocate
   allocate( phi_qyz(SizeHist,SizeHist)  )
   !initialize radial distribution function
   gr_ps   = 0
+  gr_s_pa = 0
+  gr_s_sa = 0
   gr_p_xy = 0
   !initialize histogram
   phi_tot      = 0
@@ -563,7 +569,7 @@ subroutine continue_read_data(l)
   use global_variables
   integer, intent(out) :: l
   integer :: i,j
-  real*8, dimension(SizeHist,3)  :: grr
+  real*8, dimension(SizeHist,5)  :: grr
   real*8, dimension(SizeHist,8)  :: alpha_phi
   real*8, dimension(SizeHist,13) :: phi
   real*8, dimension(SizeHist,8)  :: theta
@@ -605,9 +611,11 @@ subroutine continue_read_data(l)
   open(26,file='./data/force_star1.txt')
   open(27,file='./data/Rg_dist.txt')
   open(28,file='./data/h_dist.txt')
-    read(18,*) ((grr(i,j),j=1,3),i=1,SizeHist)
+    read(18,*) ((grr(i,j),j=1,5),i=1,SizeHist)
       gr_ps(:,2) = grr(:,2)
-      gr_p_xy(:,2) = grr(:,3)
+      gr_s_sa(:,2) = grr(:,3)
+      gr_s_pa(:,2) = grr(:,4)
+      gr_p_xy(:,2) = grr(:,5)
     read(19,*) ((alpha_phi(i,j),j=1,8),i=1,SizeHist)
       phi_branch(:,2)   = alpha_phi(:,2)
       alpha_stem(:,2)   = alpha_phi(:,4)
@@ -1484,8 +1492,8 @@ subroutine histogram
   !!-------------------gr_ps-----------------!
   do i = 1, Nq_salt_ions
     do j = 1, Nq_PE
-      k = i + NN - Nq_salt_ions
-      l = charge(j)
+      k = i + NN - Nq_salt_ions         ! salt
+      l = charge(j)                     ! ions on polymer
       call rij_and_rr(rij1, rr1, k, l)
       del_r = Lx/SizeHist/2
       m = floor( sqrt(rr1) / del_r ) + 1
@@ -1493,6 +1501,34 @@ subroutine histogram
         gr_ps( m, 2 ) = gr_ps( m, 2 ) + 1/(4*pi*rr1*Nq_PE*Nq_salt_ions*del_r) 
       end if
     end do
+  end do
+  !!-------------------gr_s_sa-----------------!
+  do i = 1, Nq_salt_ions
+    do j = 1, Nq_salt_ions*nint(abs(qqi))
+      k = i + NN - Nq_salt_ions
+      l = j + NN - Nq_salt_ions*(nint(abs(qqi))+1)
+      call rij_and_rr(rij1, rr1, k, l)
+      del_r = Lx/SizeHist/2
+      m = floor( sqrt(rr1) / del_r ) + 1
+      if ( sqrt(rr1) < Lx/2 ) then
+        gr_s_sa( m, 2 ) = gr_s_sa( m, 2 ) &
+         + 1/(4*pi*rr1*Nq_salt_ions*nint(abs(qqi))*Nq_salt_ions*del_r) 
+      end if
+    end do 
+  end do
+  !!-------------------gr_p_pa-----------------!
+  do i = 1, Nq_salt_ions
+    do j = 1, Nq_PE
+      k = i + NN - Nq_salt_ions
+      l = j + Npe
+      call rij_and_rr(rij1, rr1, k, l)
+      del_r = Lx/SizeHist/2
+      m = floor( sqrt(rr1) / del_r ) + 1
+      if ( sqrt(rr1) < Lx/2 ) then
+        gr_s_pa( m, 2 ) = gr_s_pa( m, 2 ) &
+          + 1/(4*pi*rr1*Nq_PE*Nq_salt_ions*del_r) 
+      end if
+    end do 
   end do
   !!-------------------gr_p_xy-----------------!
   allocate(r_center(N_anchor,3))
@@ -1533,7 +1569,8 @@ subroutine histogram
       del_r = Lx/SizeHist/2
       m = floor( rr1 / del_r ) + 1
       if ( rr1 < Lx / 2 ) then
-        gr_p_xy( m, : ) = gr_p_xy( m, : ) + 1/(pi*rr1*N_anchor*N_anchor*del_r)
+        gr_p_xy( m, : ) = gr_p_xy( m, : )  &
+        &               + 1/(pi*sqrt(rr1)*N_anchor*N_anchor*del_r)
       end if
     end do
   end do
@@ -1876,7 +1913,7 @@ subroutine write_hist
 
   open(29, file='./data/gr.txt')
     do i = 1, SizeHist
-      write(29,291) i*Lz/SizeHist/2, gr_ps(i,2), gr_p_xy(i,2)
+      write(29,291) i*Lz/SizeHist/2, gr_ps(i,2), gr_s_sa(i,2), gr_s_pa(i,2), & gr_p_xy(i,2)
     end do
     291 format(3F17.6)
   close(29)
