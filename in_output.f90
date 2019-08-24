@@ -1875,6 +1875,11 @@ subroutine write_hist
   implicit none
   integer i,j
 
+  !-----------particle numbers---------!
+  open(27,file='./data/particle_numbers.txt')
+    write(27,270) 1.*Nq, 1.*Nq_PE, 1.*Nq_salt_ions, 1.*Nq_salt_ions*abs(qqi)
+  close(27) 
+  270 format(4F17.8)
   !----------------h_hist--------------!
   open(28,file='./data/h_dist.txt')
     do i = 1, SizeHist
