@@ -1918,9 +1918,10 @@ subroutine write_hist
 
   open(29, file='./data/gr.txt')
     do i = 1, SizeHist
-      write(29,291) i*Lz/SizeHist/2, gr_ps(i,2), gr_s_sa(i,2), gr_s_pa(i,2), & gr_p_xy(i,2)
+      write(29,291) i*Lz/SizeHist/2, gr_ps(i,2), gr_s_sa(i,2), gr_s_pa(i,2), & 
+        gr_p_xy(i,2)
     end do
-    291 format(3F17.6)
+    291 format(5F17.6)
   close(29)
 
   open(31,file='./data/phi.txt')
