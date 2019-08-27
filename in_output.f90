@@ -12,6 +12,9 @@ save
   real*8,  allocatable, dimension(:,:), private :: gr_s_sa
   real*8,  allocatable, dimension(:,:), private :: gr_s_pa
   real*8,  allocatable, dimension(:,:), private :: gr_p_xy
+  ! Bridging
+  real*8,  allocatable, dimension(:,:), private :: phi_topo
+  real*8,  allocatable, dimension(:),   private :: phi_bridging
   !Histogram
   real*8,  allocatable, dimension(:,:), private :: phi_tot
   real*8,  allocatable, dimension(:,:), private :: phi_l
@@ -329,6 +332,8 @@ subroutine data_allocate
   allocate( gr_p_xy(SizeHist,2) )
   !
   !Histogram
+  allocate( phi_topo(SizeHist, 2)       )
+  allocate( phi_bridging(12)            )
   allocate( phi_tot(SizeHist,2)         )
   allocate( phi_l(SizeHist,2)           )
   allocate( phi_le(SizeHist,2)          )
@@ -415,6 +420,8 @@ subroutine data_allocate
   gr_s_sa = 0
   gr_p_xy = 0
   !initialize histogram
+  phi_topo     = 0
+  phi_bridging = 0
   phi_tot      = 0
   phi_l        = 0
   phi_le       = 0
@@ -600,7 +607,9 @@ subroutine continue_read_data(l)
   theta = 0
   force = 0
   delta_angle=0
-  open(18, file='./data/gr.txt')
+  open(16,file='./data/topo.txt')
+  open(17,file='./data/bridging.txt')
+  open(18,file='./data/gr.txt')
   open(19,file='./data/alpha_phi.txt')
   open(20,file='./data/phi.txt')
   open(21,file='./data/theta.txt')
@@ -611,6 +620,8 @@ subroutine continue_read_data(l)
   open(26,file='./data/force_star1.txt')
   open(27,file='./data/Rg_dist.txt')
   open(28,file='./data/h_dist.txt')
+    read(16,*) ((phi_topo(i,j),j=1,2),i=1,SizeHist)
+    read(17,*) ( phi_bridging(i),i=1,12)
     read(18,*) ((grr(i,j),j=1,5),i=1,SizeHist)
       gr_ps(:,2) = grr(:,2)
       gr_s_sa(:,2) = grr(:,3)
@@ -678,6 +689,8 @@ subroutine continue_read_data(l)
   close(20)
   close(19)
   close(18)
+  close(17)
+  close(16)
   !
   !read histogram
   open(21,file='./data/phi_2d11.txt')
@@ -1323,6 +1336,42 @@ subroutine write_height(j)
 end subroutine write_height
 
 
+subroutine star_arm(m,n,o,i)
+  use global_variables
+  implicit none
+  integer, intent(out) :: m, n, o
+  integer, intent(in)  :: i
+  integer :: j,k
+
+  m = (i-1) / (arm*Nma+1) + 1
+  j = mod(i-1,arm*Nma+1) + 1
+  if (j<=Nma+1) then
+    n = 1
+  else
+    n = (j-Nma-1-1)/Nma + 2
+  end if
+  if ( n == 1 ) then
+    o = i - (m-1)*(arm*Nma+1)
+  else
+    o = i - (m-1)*(arm*Nma+1) - Nma - 1 - (n-2)*Nma
+  end if
+
+end subroutine star_arm
+
+
+function d_k(i,j)
+  integer, intent(in) :: i,j
+  real*8 :: d_k
+
+  if (i==j) then
+    d_k = 1
+  else
+    d_k = 0
+  end if
+
+end function d_k
+
+
 subroutine histogram
   !--------------------------------------!
   !
@@ -1340,11 +1389,13 @@ subroutine histogram
   use global_variables
   use compute_acceleration
   implicit none
-  integer :: i, j, k, l, m, n, p, q, r, x, y, z
+  integer :: i, j, k, l, m, n, o, p, q, r, x, y, z
   real*8, dimension(3) :: rij1,rij2,rij3,f1
   real*8, allocatable, dimension(:,:) :: r_center
-  real*8 :: rsqr,theta,rr1,rr2,rr3,he_min,he_max,hb
-  real*8 :: h_avg, Rg2_avg, Rgz2_avg, Rgxy2_avg, del_r
+  real*8 :: rsqr,theta,rr1,rr2,rr3,he_min,he_max,hb, i_bar, alpha
+  real*8 :: h_avg, Rg2_avg, Rgz2_avg, Rgxy2_avg, del_r, a
+  integer, allocatable, dimension(:,:) :: salt_neighbor
+  real*8, allocatable, dimension(:,:) :: topo_order
 
   call force_distribution(fene_f,lj_force_PE,lj_force_ions,coulomb_f,Bond_dist)
 
@@ -1575,6 +1626,107 @@ subroutine histogram
     end do
   end do
   deallocate(r_center)
+  !--------------------Bridging----------------!
+  allocate(salt_neighbor(Nq_salt_ions,10))
+  salt_neighbor = 0
+  do i = 1, Nq_salt_ions
+    do j = 1, Npe
+      if (pos(j,4)==0) cycle
+      m = NN - Nq_salt_ions + i
+      call rij_and_rr(rij1,rr1,m,j)
+      if (sqrt(rr1)<2) then
+        if (salt_neighbor(i,10)<10) then
+          salt_neighbor(i,10) = salt_neighbor(i,10) + 1
+          salt_neighbor(i,salt_neighbor(i,10)) = j*1
+        end if
+      end if
+    end do
+  end do
+  do i = 1, Nq_salt_ions
+    if (salt_neighbor(i,10) == 0) then
+      phi_bridging(1) = phi_bridging(1) + 1
+    elseif (salt_neighbor(i,10) == 1) then
+      call star_arm(m,n,o,salt_neighbor(i,1))
+      if (n==1) then
+        phi_bridging(2) = phi_bridging(2) + 1
+      else
+        phi_bridging(3) = phi_bridging(3) + 1
+      end if
+    elseif (salt_neighbor(i,10) == 2) then
+      call star_arm(m,n,o,salt_neighbor(i,1))
+      call star_arm(p,q,r,salt_neighbor(i,2))
+      if (m==p .and. n==1 .and. q==1) then
+        phi_bridging(4) = phi_bridging(4) + 1        
+      elseif (m==p .and. n/=1 .and. q/=1 .and. n==q) then
+        phi_bridging(5) = phi_bridging(5) + 1  
+      elseif (m==p .and. n/=1 .and. q/=1 .and. n/=q) then
+        phi_bridging(6) = phi_bridging(6) + 1 
+      elseif ( m==p .and. ((n==1 .and. q/=1) .or. (n/=1 .and. q==1)) ) then
+        phi_bridging(7) = phi_bridging(7) + 1
+      elseif (m/=p .and. n==1 .and. q==1) then
+        phi_bridging(8) = phi_bridging(8) + 1
+      elseif ( m/=p .and. ((n==1 .and. q/=1) .or. (n/=1 .and. q==1)) ) then
+        phi_bridging(9) = phi_bridging(9) + 1
+      elseif (m==p .and. n/=1 .and. q/=1) then
+        phi_bridging(10) = phi_bridging(10) + 1
+      end if
+    elseif (salt_neighbor(i,10) == 3) then
+      phi_bridging(11) = phi_bridging(11) + 1
+    elseif (salt_neighbor(i,10) > 3) then
+      phi_bridging(12) = phi_bridging(12) + 1
+    end if
+  end do
+
+  !-----------topological distance-----------!
+  allocate(topo_order(Npe,2))
+  topo_order = 0
+  do i = 1, Npe
+    call star_arm(m,n,o,i)
+    topo_order(i,1) = i*1.
+    topo_order(i,2) = 25*(m-1)*arm*Nma + ( 2*(n-2)*(1-d_k(n,1)) + &
+           10*(1-d_k(n,1)) )* Nma + o * ( 1-d_k(n,1) ) + d_k(1,n)*o/Nma
+  end do
+  salt_neighbor = 0
+  do i = 1, Nq_salt_ions
+    do j = 1, Npe
+      m = NN - Nq_salt_ions + i
+      call rij_and_rr(rij1,rr1,m,j)
+      if (sqrt(rr1)<2) then
+        if (salt_neighbor(i,10)<10) then
+          salt_neighbor(i,10) = salt_neighbor(i,10) + 1
+          salt_neighbor(i,salt_neighbor(i,10)) = j
+        end if
+      end if
+    end do
+  end do
+
+  do i = 1, Nq_salt_ions
+    i_bar = 0
+    alpha = 0
+    do j = 1, salt_neighbor(i,10)
+      k = salt_neighbor(i,j)
+      i_bar = i_bar + topo_order(k,2)
+    end do 
+      i_bar = i_bar/salt_neighbor(i,10)
+    do j = 1, salt_neighbor(i,10)
+      k = salt_neighbor(i,j)
+      alpha = alpha + (topo_order(k,2)-i_bar)**2
+    end do
+    alpha = alpha / salt_neighbor(i,10)
+    alpha = alpha**(1./8)
+    l = floor(alpha/(10./SizeHist))
+    if (l==0) then
+      phi_topo(1,2) = phi_topo(1,2) + 1
+    elseif (l<SizeHist) then
+      phi_topo(l,2) = phi_topo(l,2) + 1
+    else
+      phi_topo(SizeHist,2) = phi_topo(SizeHist,2) + 1
+    end if
+  end do
+
+  deallocate(salt_neighbor)
+  deallocate(topo_order)
+
   !!!!!!!!!!!!!!!!!!!!!!!!1d_height_distribution!!!!!!!!!!!!!!!!!!!!!
   !!-------------------phi_tot-----------------!
   do i=1,Npe
@@ -1875,6 +2027,19 @@ subroutine write_hist
   implicit none
   integer i,j
 
+  !--------------bridging--------------!
+  open(25,file='./data/bridging.txt')
+  do i = 1, 12
+    write(25,250) phi_bridging(i)
+  end do
+  close(25)
+  250 format(1F17.8)
+  open(26,file='./data/topo.txt')
+  do i = 1, SizeHist
+    write(26,260) i*10./SizeHist, phi_topo(i,2)
+  end do
+  close(26)
+  260 format(2F17.8)
   !-----------particle numbers---------!
   open(27,file='./data/particle_numbers.txt')
     write(27,270) 1.*Nq, 1.*Nq_PE, 1.*Nq_salt_ions, 1.*Nq_salt_ions*abs(qqi)

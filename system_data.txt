@@ -14,7 +14,7 @@
 7               ! man_l: Manning effect : every 'man' particle have one charge
 3               ! man_s: Manning effect : every 'man' particle have one charge
 0.97D0          ! R_bond
-3000000         ! StepNum0
+0000000         ! StepNum0
 7000000         ! StepNum:  steps of running
 500            ! DeltaStep1: height
 500            ! DeltaStep2: histogram
