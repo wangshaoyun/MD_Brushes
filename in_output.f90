@@ -1701,7 +1701,7 @@ subroutine histogram
       if (pos(j,4)==0) cycle
       m = NN - Nq_salt_ions + i
       call rij_and_rr(rij1,rr1,m,j)
-      if (sqrt(rr1)<sqrt(2)) then
+      if (sqrt(rr1)<sqrt(2.)) then
         if (salt_neighbor(i,10)<9) then
           salt_neighbor(i,10) = salt_neighbor(i,10) + 1
           salt_neighbor(i,salt_neighbor(i,10)) = j*1
@@ -1727,7 +1727,7 @@ subroutine histogram
           phi_bridging(4) = phi_bridging(4) + 1  !4: both in stem 
         elseif ( s1(2) == s2(2) .and. s1(2) /= 1 ) then
           phi_bridging(5) = phi_bridging(5) + 1  !5: both in branch 
-        elseif ( s1(2) /= 1 .and. s2=(2) /= 1 ) then
+        elseif ( s1(2) /= 1 .and. s2(2) /= 1 ) then
           phi_bridging(6) = phi_bridging(6) + 1  !6: branch a, branch b
         else
           phi_bridging(7) = phi_bridging(7) + 1  !7: branch, stem
@@ -1735,10 +1735,11 @@ subroutine histogram
       else                                  !8-10, one in star a, one in star b
         if ( s1(2) == s2(2) .and. s1(2) == 1 ) then
           phi_bridging(8) = phi_bridging(8) + 1  !8: stem, stem
-        elseif ( s1(2) /= 1 .and. s2=(2) /= 1 ) then
+        elseif ( s1(2) /= 1 .and. s2(2) /= 1 ) then
           phi_bridging(9) = phi_bridging(9) + 1  !9: branch, brnach
         else
           phi_bridging(10) = phi_bridging(10) + 1 !10: branch, stem
+        end if
       end if
     elseif (salt_neighbor(i,10) == 3) then  !11-17, 3 particles
       call star_arm(s1(1),s1(2),s1(3),salt_neighbor(i,1))
@@ -1764,6 +1765,7 @@ subroutine histogram
         else
           phi_bridging(18) = phi_bridging(18) + 1 !18: stem, branch
         end if
+      end if
     end if
   end do
 
@@ -1781,7 +1783,7 @@ subroutine histogram
     do j = 1, Npe
       m = NN - Nq_salt_ions + i
       call rij_and_rr(rij1,rr1,m,j)
-      if (sqrt(rr1)<sqrt(2)) then
+      if (sqrt(rr1)<sqrt(2.)) then
         if (salt_neighbor(i,10)<9) then
           salt_neighbor(i,10) = salt_neighbor(i,10) + 1
           salt_neighbor(i,salt_neighbor(i,10)) = j

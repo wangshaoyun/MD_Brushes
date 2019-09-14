@@ -25,7 +25,7 @@ subroutine Initialize_position
   !2.The monomer distributed in the space by random walk , so it may go to 
   !  cul-de-sac when the density is high.
   !--------------------------------------!
-  use compute_acceleration, only : charge, lj_verlet_list, real_verlet_list, &
+  use compute_acceleration,only : charge, lj_verlet_list, real_verlet_list, &
                                    real_verlet
   use global_variables
   implicit none
@@ -459,7 +459,7 @@ subroutine initialize_velocity
   !Routine Referenced:
   !  rescale_velocity
   !-----------------------------------------!
-  use compute_acceleration, only : anchor_list
+  use compute_acceleration , only : anchor_list
   use global_variables
   implicit none
   integer i,j,k
@@ -499,7 +499,7 @@ subroutine rescale_velocity
   !  algorithm to applications', Elsevier, 2002, pp.66
   !  (Algorithm 4).
   !--------------------------------------!
-  use compute_acceleration, only : anchor_list
+  use compute_acceleration , only : anchor_list
   use global_variables
   implicit none
   real*8 :: v2_sum     
@@ -557,7 +557,7 @@ subroutine new_position
   !2.Gromacs, 'manul 5.0.7', pp.50(3.115-3.119), 2015.
   !--------------------------------------!
   use global_variables
-  use compute_acceleration, only : dr_max1, dr_max2, xi, &
+  use compute_acceleration , only : dr_max1, dr_max2, xi, &
                                    compute_force
   implicit none
   real*8, dimension(3) :: dri
