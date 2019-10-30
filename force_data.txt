@@ -10,7 +10,7 @@
 6                   !ordr(3)
 3                   !lb
 1                   !xi 
-1.D0               !EF
+1.D0                !EF
 1.9D0               !tol
-800                !tau_rf
+800                 !tau_rf
 

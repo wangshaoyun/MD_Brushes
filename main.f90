@@ -78,7 +78,9 @@ implicit none
         call write_height(step)
       end if
       if ( mod(step,DeltaStep3) == 0 ) then
-        call error_analysis
+        if (qq/=0) then
+          call error_analysis
+        end if
         call write_pos1
         call write_vel1(step)
       end if

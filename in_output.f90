@@ -1409,7 +1409,7 @@ subroutine histogram
   real*8, dimension(3) :: rij1,rij2,rij3,f1
   real*8, allocatable, dimension(:,:) :: r_center
   real*8 :: rsqr,theta,rr1,rr2,rr3,he_min,he_max,hb, i_bar, alpha
-  real*8 :: h_avg, Rg2_avg, Rgz2_avg, Rgxy2_avg, del_r, a
+  real*8 :: h_avg, Rg2_avg, Rgz2_avg, Rgxy2_avg, del_r, a, ll
   integer, allocatable, dimension(:,:) :: salt_neighbor
   real*8, allocatable, dimension(:,:) :: topo_order
   integer, dimension(3) :: s1, s2, s3
@@ -1557,15 +1557,16 @@ subroutine histogram
   !------------------------------------!
 
   !!!!!!!!!!!!!!!!!!!!!!!!radial_distribution!!!!!!!!!!!!!!!!!!!!!
+  ll = sqrt((Lx/2)**2+(Ly/2)**2+(Lz/2)**2)
   !!-------------------gr_ps-----------------!
   do i = 1, Nq_salt_ions
     do j = 1, Nq_PE
       k = i + NN - Nq_salt_ions         ! salt
       l = charge(j)                     ! ions on polymer
       call rij_and_rr(rij1, rr1, k, l)
-      del_r = Lx/5000/2
+      del_r = ll/5000
       m = floor( sqrt(rr1) / del_r ) + 1
-      if ( sqrt(rr1) < Lx/2 ) then
+      if ( sqrt(rr1) < ll ) then
         gr_ps( m, 2 ) = gr_ps( m, 2 ) + 1/(4*pi*rr1*Nq_PE*Nq_salt_ions*del_r) 
       end if
     end do
@@ -1576,9 +1577,9 @@ subroutine histogram
       k = i + NN - Nq_salt_ions
       l = j + NN - Nq_salt_ions*(nint(abs(qqi))+1)
       call rij_and_rr(rij1, rr1, k, l)
-      del_r = Lx/5000/2
+      del_r = ll/5000
       m = floor( sqrt(rr1) / del_r ) + 1
-      if ( sqrt(rr1) < Lx/2 ) then
+      if ( sqrt(rr1) < ll ) then
         gr_s_sa( m, 2 ) = gr_s_sa( m, 2 ) &
          + 1/(4*pi*rr1*Nq_salt_ions*nint(abs(qqi))*Nq_salt_ions*del_r) 
       end if
@@ -1590,9 +1591,9 @@ subroutine histogram
       k = i + NN - Nq_salt_ions
       l = j + Npe
       call rij_and_rr(rij1, rr1, k, l)
-      del_r = Lx/5000/2
+      del_r = ll/5000
       m = floor( sqrt(rr1) / del_r ) + 1
-      if ( sqrt(rr1) < Lx/2 ) then
+      if ( sqrt(rr1) < ll ) then
         gr_s_pa( m, 2 ) = gr_s_pa( m, 2 ) &
           + 1/(4*pi*rr1*Nq_PE*Nq_salt_ions*del_r) 
       end if
@@ -1602,9 +1603,9 @@ subroutine histogram
   do i = 1, Npe
     do j = i+1, Npe
       call rij_and_rr(rij1, rr1, i, j)
-      del_r = Lx/5000/2
+      del_r = ll/5000
       m = floor( sqrt(rr1) / del_r ) + 1
-      if ( sqrt(rr1) < Lx/2 ) then
+      if ( sqrt(rr1) < ll ) then
         gr_p_p( m, 2 ) = gr_p_p( m, 2 ) &
           + 2/(4*pi*rr1*Npe*Npe*del_r) 
       end if
@@ -1614,11 +1615,11 @@ subroutine histogram
   do i = 1, Npe
     do j = Npe+1, Npe+Nq_PE
       call rij_and_rr(rij1, rr1, i, j)
-      del_r = Lx/5000/2
+      del_r = ll/5000
       m = floor( sqrt(rr1) / del_r ) + 1
-      if ( sqrt(rr1) < Lx/2 ) then
+      if ( sqrt(rr1) < ll ) then
         gr_p_pa( m, 2 ) = gr_p_pa( m, 2 ) &
-          + 2/(4*pi*rr1*Nq_PE*Npe*del_r) 
+          + 1/(4*pi*rr1*Nq_PE*Npe*del_r) 
       end if
     end do 
   end do
@@ -1627,11 +1628,11 @@ subroutine histogram
     do j = 1, Nq_salt_ions
       k = j + NN - Nq_salt_ions
       call rij_and_rr(rij1, rr1, i, k)
-      del_r = Lx/5000/2
+      del_r = ll/5000
       m = floor( sqrt(rr1) / del_r ) + 1
-      if ( sqrt(rr1) < Lx/2 ) then
+      if ( sqrt(rr1) < ll ) then
         gr_p_s( m, 2 ) = gr_p_s( m, 2 ) &
-          + 2/(4*pi*rr1*Nq_salt_ions*Npe*del_r) 
+          + 1/(4*pi*rr1*Nq_salt_ions*Npe*del_r) 
       end if
     end do 
   end do
@@ -1640,11 +1641,11 @@ subroutine histogram
     do j = 1, Nq_salt_ions*nint(abs(qqi))
       k = j + NN - Nq_salt_ions*(nint(abs(qqi))+1)
       call rij_and_rr(rij1, rr1, i, k)
-      del_r = Lx/5000/2
+      del_r = ll/5000
       m = floor( sqrt(rr1) / del_r ) + 1
-      if ( sqrt(rr1) < Lx/2 ) then
+      if ( sqrt(rr1) < ll ) then
         gr_p_sa( m, 2 ) = gr_p_sa( m, 2 ) &
-          + 2/(4*pi*rr1*Nq_salt_ions*nint(abs(qqi))*Npe*del_r) 
+          + 1/(4*pi*rr1*Nq_salt_ions*nint(abs(qqi))*Npe*del_r) 
       end if
     end do 
   end do
@@ -1684,11 +1685,11 @@ subroutine histogram
         rij1(2) = rij1(2) + Ly
       end if
       rr1 = sqrt( rij1(1)*rij1(1) + rij1(2)*rij1(2) )
-      del_r = Lx/5000/2
+      del_r = ll/5000
       m = floor( rr1 / del_r ) + 1
-      if ( rr1 < Lx / 2 ) then
+      if ( rr1 <  ll ) then
         gr_p_xy( m, : ) = gr_p_xy( m, : )  &
-        &               + 1/(pi*sqrt(rr1)*N_anchor*N_anchor*del_r)
+        &               + 2/(pi*sqrt(rr1)*N_anchor*N_anchor*del_r)
       end if
     end do
   end do
@@ -2118,6 +2119,7 @@ subroutine write_hist
   use global_variables
   implicit none
   integer i,j
+  real*8 :: ll
 
   !--------------bridging--------------!
   open(25,file='./data/bridging.txt')
@@ -2172,10 +2174,10 @@ subroutine write_hist
   close(30)
   300 format(8F17.6)
   !------------------------------------!
-
+  ll = sqrt((Lx/2)**2+(Ly/2)**2+(Lz/2)**2)
   open(29, file='./data/gr.txt')
-    do i = 1, SizeHist
-      write(29,291) i*Lx/5000/2, gr_ps(i,2), gr_s_sa(i,2), gr_s_pa(i,2), & 
+    do i = 1, 5000
+      write(29,291) i*ll/5000, gr_ps(i,2), gr_s_sa(i,2), gr_s_pa(i,2), & 
         gr_p_xy(i,2), gr_p_p(i,2), gr_p_pa(i,2), gr_p_s(i,2), gr_p_sa(i,2)
     end do
     291 format(9F17.6)
