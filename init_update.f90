@@ -408,6 +408,7 @@ subroutine initialize_ions
   !  rij_and_rr
   !--------------------------------------!
   use global_variables
+  use compute_acceleration
   implicit none
   integer :: i, j, k, l, m, n, x, y, p
   real*8 :: theta, rnd1, rnd2, rnd3, rsqr
@@ -427,9 +428,21 @@ subroutine initialize_ions
       pos(i,3)=rnd3*(Lz-1.8)+0.9
       do j=1,i-1
         call rij_and_rr(rij,rsqr,i,j)
-        if (rsqr<0.8) then
-          m=1
-          cycle
+        if  ( i <= NN - Nq_salt_ions .and. j <= NN - Nq_salt_ions ) then
+          if (rsqr<0.8) then
+            m=1
+            cycle
+          end if
+        elseif ( i > NN - Nq_salt_ions .and. j <= NN - Nq_salt_ions ) then
+          if (rsqr<sigma_s*0.8) then
+            m=1
+            cycle
+          end if
+        elseif ( i > NN - Nq_salt_ions .and. j > NN - Nq_salt_ions ) then
+          if (rsqr<sigma_s*sigma_s*0.8) then
+            m=1
+            cycle
+          end if
         end if
       end do
     end do

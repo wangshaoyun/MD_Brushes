@@ -1,5 +1,6 @@
 1                   !epsilon     
 1                   !sigma       
+2                   !sigma_s
 1.12246D0           !rcl       
 1.81246D0           !rvl       
 1                   !rsk    

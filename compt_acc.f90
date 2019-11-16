@@ -6,7 +6,11 @@ module compute_acceleration
   !lj potential
   real*8,  private :: epsilon     !Energy unit epsilon in lj potential
   real*8,  private :: sigma       !Distance sigma in lj potential
+  real*8           :: sigma_s     !diameter of salt
+  real*8,  private :: sigma_sp    !Distance sigma in lj potential
   real*8           :: rcl         !Cut off radius of LJ potential
+  real*8           :: rcl_s       !Cut off radius of LJ potential
+  real*8           :: rcl_sp      !Cut off radius of LJ potential
   real*8           :: rvl         !Verlet list radius of LJ potential
   integer, private :: npair1      !number of pairs in the lj verlet sphere
   real*8           :: dr_max1     !max displacement of lj verlet list
@@ -136,6 +140,7 @@ subroutine read_force_parameters
   open(10,file='./force_data.txt')
     read(10,*) epsilon
     read(10,*) sigma  
+    read(10,*) sigma_s
     read(10,*) rcl    
     read(10,*) rvl        
     read(10,*) rsk
@@ -150,6 +155,11 @@ subroutine read_force_parameters
     read(10,*) tol
     read(10,*) tau_rf
   close(10)
+
+  sigma_sp = (sigma+sigma_s)/2
+  rcl_s = 2**(1./6)*sigma_s
+  rcl_sp = 2**(1./6)*sigma_sp
+  rvl = rcl_s + 1
 
 end subroutine read_force_parameters
 
@@ -704,7 +714,7 @@ subroutine update_verlet_list
   !--------------------------------------!
   implicit none
 
-  if ( dr_max1>(rvl-rcl)/2 ) then
+  if ( dr_max1>(rvl-rcl_s)/2 ) then
     call lj_verlet_list
     dr_max1=0
   end if
@@ -888,9 +898,10 @@ subroutine lj_force
   !-----------------------------------------!
   use global_variables
   implicit none
-  integer i,j,k,n
+  integer i,j,k,n,m
   real*8, dimension(3) :: rij
-  real*8 :: rsqr,inv_r2,inv_r6,dl,cc,hLx,nhLx,hLy,nhLy,rcl2
+  real*8 :: rsqr,inv_r2,inv_r6,dl,cc,hLx,nhLx,hLy,nhLy
+  real*8 :: rcl2,rcl3,rcl4,sigma2,sigma3
   real*8, dimension(NN,3) :: acc_lj
 
   hLx=Lx/2
@@ -898,11 +909,17 @@ subroutine lj_force
   hLy=Ly/2
   nhLy=-Ly/2
   rcl2=rcl*rcl
+  rcl3=rcl_s*rcl_s
+  rcl4=rcl_sp*rcl_sp
+  sigma2=sigma_s*sigma_s
+  sigma3=sigma_sp*sigma_sp
   acc_lj=0
+
   do k=1,npair1
     i=lj_pair_list(k,1)
     j=lj_pair_list(k,2)
     rij=pos(i,1:3)-pos(j,1:3)
+    m = abs(pos(i,4))+abs(pos(j,4))
     if (rij(1)>hLx) then
       rij(1)=rij(1)-Lx
     elseif(rij(1)<=nhLx) then
@@ -914,23 +931,46 @@ subroutine lj_force
       rij(2)=rij(2)+Ly
     end if
     rsqr=rij(1)*rij(1)+rij(2)*rij(2)+rij(3)*rij(3)
-    if (rsqr<rcl2) then
-      inv_r2=1/rsqr
-      inv_r6=inv_r2*inv_r2*inv_r2
-      acc_lj(i,:)=acc_lj(i,:)+inv_r2*inv_r6*(inv_r6-0.5)*rij
+    if (m==6) then
+      if (rsqr<rcl3) then
+        inv_r2=sigma2/rsqr
+        inv_r6=inv_r2*inv_r2*inv_r2
+        acc_lj(i,:)=acc_lj(i,:)+inv_r6*(inv_r6-0.5)*rij/rsqr
+      end if
+    elseif (m<3) then
+      if (rsqr<rcl2) then
+        inv_r2=1/rsqr
+        inv_r6=inv_r2*inv_r2*inv_r2
+        acc_lj(i,:)=acc_lj(i,:)+inv_r6*(inv_r6-0.5)*rij/rsqr
+      end if
+    else
+      if (rsqr<rcl4) then
+        inv_r2=sigma3/rsqr
+        inv_r6=inv_r2*inv_r2*inv_r2
+        acc_lj(i,:)=acc_lj(i,:)+inv_r6*(inv_r6-0.5)*rij/rsqr
+      end if          
     end if
   end do
   acc_lj=acc_lj*48
   !wall force
   do i=1,NN
-    if (abs(pos(i,3))<0.01 .or. abs(pos(i,3)-Lz)<0.01)  then  !exclude the end monomer on the plate
-    cycle
-    elseif ( pos(i,3)<rcl ) then
-      dl=pos(i,3)
-      acc_lj(i,3)=acc_lj(i,3)+0.4*(3/(dl**11)-1/(dl**5))*dl
-    elseif ( (Lz-pos(i,3))<rcl ) then
-      dl=Lz-pos(i,3)
-      acc_lj(i,3)=acc_lj(i,3)-0.4*(3/(dl**11)-1/(dl**5))*dl
+    if (abs(pos(i,3))<0.01 .or. abs(pos(i,3)-Lz)<0.01) cycle
+    if (pos(i,4)/=3) then
+      if ( pos(i,3)<(rcl/(5**(1./6))) ) then
+        dl=pos(i,3)
+        acc_lj(i,3)=acc_lj(i,3)+0.4*(3/(dl**11)-1/(dl**5))*dl
+      elseif ( (Lz-pos(i,3))<(rcl/(5**(1./6))) ) then
+        dl=Lz-pos(i,3)
+        acc_lj(i,3)=acc_lj(i,3)-0.4*(3/(dl**11)-1/(dl**5))*dl
+      end if
+    else
+      if ( pos(i,3)<(rcl_s/(5**(1./6))) ) then
+        dl=pos(i,3)
+        acc_lj(i,3)=acc_lj(i,3)+0.4*(3*((sigma_s/dl)**11)-1*((sigma_s/dl)**5))*dl/sigma_s/sigma_s
+      elseif ( (Lz-pos(i,3))<(rcl_s/(5**(1./6))) ) then
+        dl=Lz-pos(i,3)
+        acc_lj(i,3)=acc_lj(i,3)-0.4*(3*((sigma_s/dl)**11)-1*((sigma_s/dl)**5))*dl/sigma_s/sigma_s
+      end if
     end if
   end do
   acc=acc+acc_lj

@@ -11,6 +11,7 @@ save
   real*8,  allocatable, dimension(:,:), private :: gr_ps
   real*8,  allocatable, dimension(:,:), private :: gr_s_sa
   real*8,  allocatable, dimension(:,:), private :: gr_s_pa
+  real*8,  allocatable, dimension(:,:), private :: gr_s_s
   real*8,  allocatable, dimension(:,:), private :: gr_p_p
   real*8,  allocatable, dimension(:,:), private :: gr_p_pa
   real*8,  allocatable, dimension(:,:), private :: gr_p_s
@@ -332,6 +333,7 @@ subroutine data_allocate
   !radial distribution function
   allocate( gr_ps(5000, 2)  )
   allocate( gr_s_sa(5000,2) )
+  allocate( gr_s_s(5000,2) )
   allocate( gr_s_pa(5000,2) )
   allocate( gr_p_p(5000,2) )
   allocate( gr_p_pa(5000,2) )
@@ -341,7 +343,7 @@ subroutine data_allocate
   !
   !Histogram
   allocate( phi_topo(5000, 2)       )
-  allocate( phi_bridging(18)            ) 
+  allocate( phi_bridging(19)            ) 
   allocate( phi_tot(SizeHist,2)         )
   allocate( phi_l(SizeHist,2)           )
   allocate( phi_le(SizeHist,2)          )
@@ -426,6 +428,7 @@ subroutine data_allocate
   gr_ps   = 0
   gr_s_pa = 0
   gr_s_sa = 0
+  gr_s_s = 0
   gr_p_p  = 0
   gr_p_pa = 0
   gr_p_s  = 0
@@ -588,7 +591,7 @@ subroutine continue_read_data(l)
   use global_variables
   integer, intent(out) :: l
   integer :: i,j
-  real*8, dimension(5000,9)  :: grr
+  real*8, dimension(5000,10)  :: grr
   real*8, dimension(SizeHist,8)  :: alpha_phi
   real*8, dimension(SizeHist,13) :: phi
   real*8, dimension(SizeHist,8)  :: theta
@@ -633,16 +636,17 @@ subroutine continue_read_data(l)
   open(27,file='./data/Rg_dist.txt')
   open(28,file='./data/h_dist.txt')
     read(16,*) ((phi_topo(i,j),j=1,2),i=1,5000)
-    read(17,*) ( phi_bridging(i),i=1,18)
-    read(18,*) ((grr(i,j),j=1,9),i=1,5000)
+    read(17,*) ( phi_bridging(i),i=1,19)
+    read(18,*) ((grr(i,j),j=1,10),i=1,5000)
       gr_ps(:,2) = grr(:,2)
       gr_s_sa(:,2) = grr(:,3)
       gr_s_pa(:,2) = grr(:,4)
-      gr_p_xy(:,2) = grr(:,5)
+      gr_s_s(:,2)  = grr(:,5)
       gr_p_p(:,2)  = grr(:,6)
       gr_p_pa(:,2) = grr(:,7)
       gr_p_s(:,2)  = grr(:,8)
-      gr_p_sa(:,2) = grr(:,9)    
+      gr_p_sa(:,2) = grr(:,9) 
+      gr_p_xy(:,2) = grr(:,10)   
     read(19,*) ((alpha_phi(i,j),j=1,8),i=1,SizeHist)
       phi_branch(:,2)   = alpha_phi(:,2)
       alpha_stem(:,2)   = alpha_phi(:,4)
@@ -1557,7 +1561,7 @@ subroutine histogram
   !------------------------------------!
 
   !!!!!!!!!!!!!!!!!!!!!!!!radial_distribution!!!!!!!!!!!!!!!!!!!!!
-  ll = sqrt((Lx/2)**2+(Ly/2)**2+(Lz/2)**2)
+  ll = sqrt((Lx/2)**2+(Ly/2)**2+(Lz)**2)
   !!-------------------gr_ps-----------------!
   do i = 1, Nq_salt_ions
     do j = 1, Nq_PE
@@ -1571,7 +1575,7 @@ subroutine histogram
       end if
     end do
   end do
-  !!-------------------gr_s_sa-----------------!
+  !!-------------------gr_s_sa---------------!
   do i = 1, Nq_salt_ions
     do j = 1, Nq_salt_ions*nint(abs(qqi))
       k = i + NN - Nq_salt_ions
@@ -1582,6 +1586,20 @@ subroutine histogram
       if ( sqrt(rr1) < ll ) then
         gr_s_sa( m, 2 ) = gr_s_sa( m, 2 ) &
          + 1/(4*pi*rr1*Nq_salt_ions*nint(abs(qqi))*Nq_salt_ions*del_r) 
+      end if
+    end do 
+  end do
+  !!-------------------gr_s_s-----------------!
+  do i = 1, Nq_salt_ions
+    do j = 1, Nq_salt_ions
+      k = i + NN - Nq_salt_ions
+      l = j + NN - Nq_salt_ions
+      call rij_and_rr(rij1, rr1, k, l)
+      del_r = ll/5000
+      m = floor( sqrt(rr1) / del_r ) + 1
+      if ( sqrt(rr1) < ll ) then
+        gr_s_s( m, 2 ) = gr_s_s( m, 2 ) &
+         + 1/(4*pi*rr1*Nq_salt_ions*Nq_salt_ions*del_r) 
       end if
     end do 
   end do
@@ -1702,7 +1720,7 @@ subroutine histogram
       if (pos(j,4)==0) cycle
       m = NN - Nq_salt_ions + i
       call rij_and_rr(rij1,rr1,m,j)
-      if (sqrt(rr1)<sqrt(2.)) then
+      if (sqrt(rr1)<1.12) then
         if (salt_neighbor(i,10)<9) then
           salt_neighbor(i,10) = salt_neighbor(i,10) + 1
           salt_neighbor(i,salt_neighbor(i,10)) = j*1
@@ -1767,6 +1785,8 @@ subroutine histogram
           phi_bridging(18) = phi_bridging(18) + 1 !18: stem, branch
         end if
       end if
+    elseif (salt_neighbor(i,10) > 3) then
+      phi_bridging(19) = phi_bridging(19) + 1
     end if
   end do
 
@@ -1784,7 +1804,7 @@ subroutine histogram
     do j = 1, Npe
       m = NN - Nq_salt_ions + i
       call rij_and_rr(rij1,rr1,m,j)
-      if (sqrt(rr1)<sqrt(2.)) then
+      if (sqrt(rr1)<1.12) then
         if (salt_neighbor(i,10)<9) then
           salt_neighbor(i,10) = salt_neighbor(i,10) + 1
           salt_neighbor(i,salt_neighbor(i,10)) = j
@@ -2123,7 +2143,7 @@ subroutine write_hist
 
   !--------------bridging--------------!
   open(25,file='./data/bridging.txt')
-  do i = 1, 18
+  do i = 1, 19
     write(25,250) phi_bridging(i)
   end do
   close(25)
@@ -2174,13 +2194,14 @@ subroutine write_hist
   close(30)
   300 format(8F17.6)
   !------------------------------------!
-  ll = sqrt((Lx/2)**2+(Ly/2)**2+(Lz/2)**2)
+  ll = sqrt((Lx/2)**2+(Ly/2)**2+(Lz)**2)
   open(29, file='./data/gr.txt')
     do i = 1, 5000
       write(29,291) i*ll/5000, gr_ps(i,2), gr_s_sa(i,2), gr_s_pa(i,2), & 
-        gr_p_xy(i,2), gr_p_p(i,2), gr_p_pa(i,2), gr_p_s(i,2), gr_p_sa(i,2)
+        gr_s_s(i,2), gr_p_p(i,2), gr_p_pa(i,2), gr_p_s(i,2), &
+        gr_p_sa(i,2),gr_p_xy(i,2)
     end do
-    291 format(9F17.6)
+    291 format(10F17.6)
   close(29)
 
   open(31,file='./data/phi.txt')
