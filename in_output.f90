@@ -328,7 +328,7 @@ subroutine data_allocate
   allocate( phi_branch(SizeHist,2)      )
   allocate( alpha_stem(SizeHist,2)      )
   allocate( alpha_branch(SizeHist,2)    )
-  allocate( alpha_end(SizeHist,2)    )
+  allocate( alpha_end(SizeHist,2)       )
   !
   !radial distribution function
   allocate( gr_ps(5000, 2)  )
