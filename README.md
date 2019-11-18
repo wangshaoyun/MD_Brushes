@@ -1,4 +1,4 @@
-![Coverpage](https://github.com/wangshaoyun/Bond_Fluctuation_Method_SPME/blob/master/coverpage.jpg "Simulation System")
+![Coverpage](https://github.com/wangshaoyun/MD_Brushes/blob/master/coverpage.jpg "Simulation System")
 # Molecular Dynamics Simulation of Polyelectrolyte Brushes.
 ## About this program
 1. This is a program used to simulate weak polyelectrolytes(PE) brushes with salts by Langevin dynamics [1,2].
