@@ -30,6 +30,7 @@ subroutine Initialize_position
   use global_variables
   implicit none
   integer :: l, i
+  real*8 :: rnd
 
   l=0
   !
@@ -50,7 +51,12 @@ subroutine Initialize_position
   !
   !initialize chargen on PE
   do i=1, Nq_PE
-    pos(charge(i),4) = qq                 
+    call random_number(rnd)
+    if (rnd<p_ratio) then
+      pos(charge(i),4) = qq 
+    else 
+      pos(charge(i),4) = -qq 
+    end if              
   end do
   !
   !initialize lj_verlet_list
@@ -447,7 +453,7 @@ subroutine initialize_ions
       end do
     end do
     if ( i <= ( NN - Nq_salt_ions * (nint(abs(qqi))+1) ) ) then
-      pos(i,4) = - qq / abs(qq)
+      pos(i,4) = - pos(charge(i-Npe),4)
     elseif ( i <= ( NN - Nq_salt_ions ) ) then
       pos(i,4) = - qqi / abs(qqi)
     else

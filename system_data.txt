@@ -13,6 +13,7 @@
 6               ! Ngl: grafting number of linear chains
 7               ! man_l: Manning effect : every 'man' particle have one charge
 3               ! man_s: Manning effect : every 'man' particle have one charge
+0.9             ! ratio of negative charged particles on PE
 0.97D0          ! R_bond
 3000000         ! StepNum0
 7000000         ! StepNum:  steps of running

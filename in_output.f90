@@ -22,6 +22,12 @@ save
   real*8,  allocatable, dimension(:),   private :: phi_bridging
   !Histogram
   real*8,  allocatable, dimension(:,:), private :: phi_tot
+  real*8,  allocatable, dimension(:,:), private :: phi_p
+  real*8,  allocatable, dimension(:,:), private :: phi_n
+  real*8,  allocatable, dimension(:,:), private :: phi_t
+  real*8,  allocatable, dimension(:,:), private :: phi_p_a
+  real*8,  allocatable, dimension(:,:), private :: phi_n_a
+  real*8,  allocatable, dimension(:,:), private :: phi_t_a
   real*8,  allocatable, dimension(:,:), private :: phi_l
   real*8,  allocatable, dimension(:,:), private :: phi_le
   real*8,  allocatable, dimension(:,:), private :: phi_s
@@ -202,6 +208,7 @@ subroutine read_data
     read(10,*) Ngl
     read(10,*) man_l
     read(10,*) man_s
+    read(10,*) p_ratio
     read(10,*) R_bond
     read(10,*) StepNum0           
     read(10,*) StepNum            
@@ -342,9 +349,15 @@ subroutine data_allocate
   allocate( gr_p_xy(5000,2) ) 
   !
   !Histogram
-  allocate( phi_topo(5000, 2)       )
+  allocate( phi_topo(5000, 2)           )
   allocate( phi_bridging(19)            ) 
   allocate( phi_tot(SizeHist,2)         )
+  allocate( phi_p(SizeHist,2)           )
+  allocate( phi_n(SizeHist,2)           )
+  allocate( phi_t(SizeHist,2)           )
+  allocate( phi_p_a(SizeHist,2)         )
+  allocate( phi_n_a(SizeHist,2)         )
+  allocate( phi_t_a(SizeHist,2)         )
   allocate( phi_l(SizeHist,2)           )
   allocate( phi_le(SizeHist,2)          )
   allocate( phi_s(SizeHist,2)           )
@@ -438,6 +451,12 @@ subroutine data_allocate
   phi_topo     = 0
   phi_bridging = 0
   phi_tot      = 0
+  phi_p        = 0
+  phi_n        = 0
+  phi_t        = 0
+  phi_p_a      = 0
+  phi_n_a      = 0
+  phi_t_a      = 0
   phi_l        = 0
   phi_le       = 0
   phi_s        = 0
@@ -593,7 +612,7 @@ subroutine continue_read_data(l)
   integer :: i,j
   real*8, dimension(5000,10)  :: grr
   real*8, dimension(SizeHist,8)  :: alpha_phi
-  real*8, dimension(SizeHist,13) :: phi
+  real*8, dimension(SizeHist,19) :: phi
   real*8, dimension(SizeHist,8)  :: theta
   real*8, dimension(2*Nma,4)     :: force
   real*8, dimension(SizeHist,4)  :: force1
@@ -652,7 +671,7 @@ subroutine continue_read_data(l)
       alpha_stem(:,2)   = alpha_phi(:,4)
       alpha_branch(:,2) = alpha_phi(:,6)
       alpha_end(:,2)    = alpha_phi(:,8)
-    read(20,*) ((phi(i,j),j=1,13),i=1,SizeHist)
+    read(20,*) ((phi(i,j),j=1,19),i=1,SizeHist)
       phi_tot(:,2)= phi(:,2)
       phi_l(:,2)  = phi(:,3)
       phi_le(:,2) = phi(:,4)
@@ -665,6 +684,12 @@ subroutine continue_read_data(l)
       phi_is(:,2) = phi(:,11)
       phi_ap(:,2) = phi(:,12)
       phi_as(:,2) = phi(:,13)
+      phi_p(:,2)  = phi(:,14)
+      phi_n(:,2)  = phi(:,15)
+      phi_t(:,2)  = phi(:,16)
+      phi_p_a(:,2) = phi(:,17)
+      phi_n_a(:,2) = phi(:,18)
+      phi_t_a(:,2) = phi(:,19)
     read(21,*) ((theta(i,j),j=1,8),i=1,SizeHist)
       theta_l(:,2)=theta(:,2)
       theta_lz(:,2)=theta(:,3)
@@ -1841,6 +1866,37 @@ subroutine histogram
   deallocate(topo_order)
 
   !!!!!!!!!!!!!!!!!!!!!!!!1d_height_distribution!!!!!!!!!!!!!!!!!!!!!
+  !!-------------phi_p,n,t,pa,na,ta------------!
+  do i = 1, Npe
+    k=ceiling(pos(i,3)/(Lz/SizeHist))
+    if (k==0) cycle
+    if (k<0 .or. k>SizeHist) then
+      write(*,*) 'Wrong in phi_tot: k<0 or k>SizeHist!'
+      cycle
+    end if
+    if (pos(i,4)<0) then
+      phi_p(k,2)=phi_p(k,2)+1
+      phi_t(k,2)=phi_t(k,2)+1
+    elseif (pos(i,4)>0) then
+      phi_n(k,2)=phi_n(k,2)+1
+      phi_t(k,2)=phi_t(k,2)+1
+    end if
+  end do
+  do i = 1, Npe+Nq_PE
+    k=ceiling(pos(i,3)/(Lz/SizeHist))
+    if (k==0) cycle
+    if (k<0 .or. k>SizeHist) then
+      write(*,*) 'Wrong in phi_tot: k<0 or k>SizeHist!'
+      cycle
+    end if
+    if (pos(i,4)>0) then
+      phi_p_a(k,2)=phi_p_a(k,2)+1
+      phi_t_a(k,2)=phi_t_a(k,2)+1
+    elseif (pos(i,4)<0) then
+      phi_n_a(k,2)=phi_n_a(k,2)+1
+      phi_t_a(k,2)=phi_t_a(k,2)+1
+    end if
+  end do
   !!-------------------phi_tot-----------------!
   do i=1,Npe
     k=ceiling(pos(i,3)/(Lz/SizeHist))
@@ -2210,9 +2266,10 @@ subroutine write_hist
       write(31,340) phi_tot(i,1),phi_tot(i,2),phi_l(i,2),phi_le(i,2),  &
                     phi_s(i,2),phi_sb(i,2),phi_se(i,2), phi_a(i,2),    &
                     phi_i(i,2), phi_q(i,2), phi_is(i,2), phi_ap(i,2),  &
-                    phi_as(i,2)     
+                    phi_as(i,2), phi_p(i,2), phi_n(i,2), phi_t(i,2),   &
+                    phi_p_a(i,2), phi_n_a(i,2), phi_t_a(i,2)    
     end do
-    340 format(13F17.6)
+    340 format(19F17.6)
   close(31)
 
   open(32,file='./data/theta.txt')

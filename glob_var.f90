@@ -35,6 +35,7 @@ save
   real*8  :: ion_ratio!Ratio of salt ions to the charge quantites of PE
   integer :: Nq_PE    !Charged monomers of PE
   real*8  :: R_bond   !length of chemical band
+  real*8  :: p_ratio  !ratio of negative charged particles on PE
 
 !##################end systems coefficient#################!
 
@@ -56,7 +57,7 @@ save
   real*8  :: total_time=0         !total time of the simulation
   !
   !histogram
-  integer :: SizeHist=2000        !number of histogram which is equally divided
+  integer :: SizeHist=500        !number of histogram which is equally divided
 !################end running and Histogram#################!
 
 !##########################arrays##########################!
