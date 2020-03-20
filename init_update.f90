@@ -26,7 +26,7 @@ subroutine Initialize_position
   !  cul-de-sac when the density is high.
   !--------------------------------------!
   use compute_acceleration,only : charge, lj_verlet_list, real_verlet_list, &
-                                   real_verlet
+                                   real_verlet, charge1
   use global_variables
   implicit none
   integer :: l, i
@@ -43,15 +43,15 @@ subroutine Initialize_position
   end if
   call period_condition_pos
   !
+  !initialize chargen on PE
+  do i=1, Nq_PE
+    pos(charge(i),4) = charge(i)*qq              
+  end do
+  !
   !random distribution in the box
   if ( qq /= 0 ) then
     call initialize_ions
   end if
-  !
-  !initialize chargen on PE
-  do i=1, Nq_PE
-    pos(charge(i),4) = qq                 
-  end do
   !
   !initialize lj_verlet_list
   call lj_verlet_list
@@ -447,7 +447,7 @@ subroutine initialize_ions
       end do
     end do
     if ( i <= ( NN - Nq_salt_ions * (nint(abs(qqi))+1) ) ) then
-      pos(i,4) = - qq / abs(qq)
+      pos(i,4) = - pos(charge(i-Npe),4) / abs(qq)
     elseif ( i <= ( NN - Nq_salt_ions ) ) then
       pos(i,4) = - qqi / abs(qqi)
     else

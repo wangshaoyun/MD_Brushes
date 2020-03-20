@@ -236,12 +236,15 @@ subroutine data_operation
   integer :: Charge_ions    !电量而不是粒子数
   !
   !the situation of the arm whether is charge or not
-  allocate( charged_arm(arm) )
+  allocate( charged_arm(arm,2) )
   charged_arm = 0
   if ( Nga /= 0 ) then
     open( 100, file='q_arm.txt' )
       do i = 1, arm
-        read( 100, * ) charged_arm(i)
+        read( 100, * ) charged_arm(i,1)
+      end do
+      do i = arm+1, arm*2
+        read( 100, * ) charged_arm(i,2)
       end do
     close( 100 )
   end if

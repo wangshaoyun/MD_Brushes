@@ -56,14 +56,14 @@ save
   real*8  :: total_time=0         !total time of the simulation
   !
   !histogram
-  integer :: SizeHist=2000        !number of histogram which is equally divided
+  integer :: SizeHist=500        !number of histogram which is equally divided
 !################end running and Histogram#################!
 
 !##########################arrays##########################!
   real*8, allocatable, dimension(:,:) :: pos    !array of position
   real*8, allocatable, dimension(:,:) :: vel    !array of velocity
   real*8, allocatable, dimension(:,:) :: acc    !array of accelaration
-  integer, allocatable, dimension(:) :: charged_arm
+  integer, allocatable, dimension(:,:):: charged_arm
 !########################end arrays########################!
 
 

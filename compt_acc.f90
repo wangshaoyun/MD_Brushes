@@ -60,6 +60,8 @@ module compute_acceleration
                         !real space verlet list
   integer, allocatable, dimension( : )          :: charge
                         !charge number to monomer number
+  integer, allocatable, dimension( : )          :: charge1
+                        !charge number to monomer number
   integer, allocatable, dimension(:,:), private :: fene_list
                         !pairs of two adjacent monomers
   integer, allocatable, dimension( : )          :: anchor_list
@@ -448,24 +450,28 @@ subroutine build_charge
 
   if ( allocated(charge) ) deallocate(charge)
   allocate( charge(Nq) )
+  if ( allocated(charge1) ) deallocate(charge1)
+  allocate( charge1(Nq) )
   
   l=0
   !star brushes
   do i=1,Nga
-    if ( charged_arm(1) /= 0 ) then
+    if ( charged_arm(1,1) /= 0 ) then
       do k = 2, Nma+1     !the chain anchored to the plate
         if ( mod( k-1, man_s ) == 0 ) then
           l = l + 1
           charge(l) = (i-1) * (arm*Nma+1) + k
+          charge1(l) = charged_arm(1,2)
         end if
       end do
     end if
     do j = 2, arm  
-      if (charged_arm(j) /=0 ) then 
+      if (charged_arm(j,1) /=0 ) then 
         do k = 1, Nma
           if ( mod( k, man_s ) == 0) then
             l = l + 1
             charge(l) = (i-1)*(arm*Nma+1) + ((j-1)*Nma+1) + k
+            charge1(l) = charged_arm(j,2)
           end if
         end do
       end if
