@@ -28,6 +28,7 @@ subroutine Initialize_position
   use compute_acceleration,only : charge, lj_verlet_list, real_verlet_list, &
                                    real_verlet, charge1
   use global_variables
+  use input_output
   implicit none
   integer :: l, i
 
@@ -45,7 +46,7 @@ subroutine Initialize_position
   !
   !initialize chargen on PE
   do i=1, Nq_PE
-    pos(charge(i),4) = charge(i)*qq              
+    pos(charge(i),4) = 1.*charge1(i)*qq  
   end do
   !
   !random distribution in the box
@@ -60,7 +61,6 @@ subroutine Initialize_position
   if ( real_verlet == 1 ) then
     call real_verlet_list
   end if
-
   write(*,*) 'Inititalize position is finished!'
 
 end subroutine Initialize_Position
@@ -447,7 +447,7 @@ subroutine initialize_ions
       end do
     end do
     if ( i <= ( NN - Nq_salt_ions * (nint(abs(qqi))+1) ) ) then
-      pos(i,4) = - pos(charge(i-Npe),4) / abs(qq)
+      pos(i,4) = - pos(charge(i-Npe),4)
     elseif ( i <= ( NN - Nq_salt_ions ) ) then
       pos(i,4) = - qqi / abs(qqi)
     else

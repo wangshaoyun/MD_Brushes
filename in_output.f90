@@ -243,14 +243,14 @@ subroutine data_operation
       do i = 1, arm
         read( 100, * ) charged_arm(i,1)
       end do
-      do i = arm+1, arm*2
+      do i = 1, arm
         read( 100, * ) charged_arm(i,2)
       end do
     close( 100 )
   end if
   !
   !The total arms that are charged
-  arm_q = sum( charged_arm )
+  arm_q = size( charged_arm, 1 )
   !
   !The total monomers of star brushes
   Nta = ( Nma*arm + 1 ) * Nga

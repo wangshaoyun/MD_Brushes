@@ -491,6 +491,7 @@ subroutine build_charge
     l=l+1
     charge(l)=i
   end do
+
 end subroutine build_charge
 
 

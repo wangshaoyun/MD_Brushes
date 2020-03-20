@@ -6,11 +6,11 @@
 -1              ! qq:       charge of PE
 3               ! qqi:      charge of salt ions
 0               ! ion_ratio
-3               ! arm: number of arm in star brushes
+4               ! arm: number of arm in star brushes
 50              ! Nma: number of monomers of each arm
-60              ! Nga: grafting number of star brushes
+64              ! Nga: grafting number of star brushes
 101             ! Nml: Monomers of each linear chain, mod(Nml-1,man)==0 
-6               ! Ngl: grafting number of linear chains
+0               ! Ngl: grafting number of linear chains
 7               ! man_l: Manning effect : every 'man' particle have one charge
 3               ! man_s: Manning effect : every 'man' particle have one charge
 0.97D0          ! R_bond
