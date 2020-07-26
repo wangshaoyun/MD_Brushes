@@ -7,6 +7,7 @@ save
   real*8,  allocatable, dimension(:,:), private :: alpha_stem
   real*8,  allocatable, dimension(:,:), private :: alpha_branch
   real*8,  allocatable, dimension(:,:), private :: alpha_end
+  real*8,  allocatable, dimension(:,:), private :: persistent_length
   ! radial distribution function
   real*8,  allocatable, dimension(:,:), private :: gr_ps
   real*8,  allocatable, dimension(:,:), private :: gr_s_sa
@@ -20,6 +21,8 @@ save
   ! Bridging
   real*8,  allocatable, dimension(:,:), private :: phi_topo
   real*8,  allocatable, dimension(:),   private :: phi_bridging
+  real*8,  allocatable, dimension(:,:), private :: S_qxy
+  real*8,  allocatable, dimension(:),   private :: qxy
   !Histogram
   real*8,  allocatable, dimension(:,:), private :: phi_tot
   real*8,  allocatable, dimension(:,:), private :: phi_l
@@ -332,6 +335,7 @@ subroutine data_allocate
   allocate( alpha_stem(SizeHist,2)      )
   allocate( alpha_branch(SizeHist,2)    )
   allocate( alpha_end(SizeHist,2)       )
+  allocate( persistent_length(Nma, 3)   )
   !
   !radial distribution function
   allocate( gr_ps(5000, 2)  )
@@ -345,7 +349,9 @@ subroutine data_allocate
   allocate( gr_p_xy(5000,2) ) 
   !
   !Histogram
-  allocate( phi_topo(5000, 2)       )
+  allocate( phi_topo(5000, 2)           )
+  allocate( S_qxy(100, 100)           )
+  allocate( qxy(100)                   )
   allocate( phi_bridging(19)            ) 
   allocate( phi_tot(SizeHist,2)         )
   allocate( phi_l(SizeHist,2)           )
@@ -427,6 +433,7 @@ subroutine data_allocate
   allocate( phi_qzx(SizeHist,SizeHist)  )
   allocate( phi_qxy(SizeHist,SizeHist)  )
   allocate( phi_qyz(SizeHist,SizeHist)  )
+  persistent_length = 0
   !initialize radial distribution function
   gr_ps   = 0
   gr_s_pa = 0
@@ -439,6 +446,8 @@ subroutine data_allocate
   gr_p_xy = 0
   !initialize histogram
   phi_topo     = 0
+  S_qxy        = 0 
+  qxy          = 0
   phi_bridging = 0
   phi_tot      = 0
   phi_l        = 0
@@ -625,6 +634,7 @@ subroutine continue_read_data(l)
   theta = 0
   force = 0
   delta_angle=0
+  open(15,file='./data/S_qxy.txt')
   open(16,file='./data/topo.txt')
   open(17,file='./data/bridging.txt')
   open(18,file='./data/gr.txt')
@@ -638,7 +648,9 @@ subroutine continue_read_data(l)
   open(26,file='./data/force_star1.txt')
   open(27,file='./data/Rg_dist.txt')
   open(28,file='./data/h_dist.txt')
-    read(16,*) ((phi_topo(i,j),j=1,2),i=1,5000)
+  open(29,file='./persistent_length.txt')
+    read(15,*) ((S_qxy(i,j),j=1,100),i=1,100)
+!     read(16,*) ((phi_topo(i,j),j=1,2),i=1,5000)
     read(17,*) ( phi_bridging(i),i=1,19)
     read(18,*) ((grr(i,j),j=1,10),i=1,5000)
       gr_ps(:,2) = grr(:,2)
@@ -701,6 +713,8 @@ subroutine continue_read_data(l)
       linear_h_dist(:,2)=h_dist(:,2)
       star_h_dist(:,2)=h_dist(:,3)
       star_end_h_dist(:,2)=h_dist(:,4)
+    read(29,*) ((persistent_length(i,j),j=1,3),i=1,Nma)
+  close(29)
   close(28)
   close(27)
   close(26)
@@ -714,6 +728,7 @@ subroutine continue_read_data(l)
   close(18)
   close(17)
   close(16)
+  close(15)
   !
   !read histogram
   open(21,file='./data/phi_2d11.txt')
@@ -1415,14 +1430,49 @@ subroutine histogram
   integer :: i, j, k, l, m, n, o, p, q, r, x, y, z
   real*8, dimension(3) :: rij1,rij2,rij3,f1
   real*8, allocatable, dimension(:,:) :: r_center
-  real*8 :: rsqr,theta,rr1,rr2,rr3,he_min,he_max,hb, i_bar, alpha
+  real*8 :: rsqr,theta,rr1,rr2,rr3,he_min,he_max,hb, i_bar, alpha, cs
   real*8 :: h_avg, Rg2_avg, Rgz2_avg, Rgxy2_avg, del_r, a, ll
+  real*8 :: S_qxy_sum_s, S_qxy_sum_c
   integer, allocatable, dimension(:,:) :: salt_neighbor
   real*8, allocatable, dimension(:,:) :: topo_order
   integer, dimension(3) :: s1, s2, s3
 
   call force_distribution(fene_f,lj_force_PE,lj_force_ions,coulomb_f,Bond_dist)
 
+
+  !--------------persistent length-------------!
+  do i = 1, Nga
+    do j = 1, Nma-2
+      do k = j+1, Nma-1
+        l = (i-1)*(arm*Nma+1) + j
+        m = l + 1
+        call rij_and_rr(rij1, rr1, l, m)
+        rr1 = sqrt(rr1)
+        l = (i-1)*(arm*Nma+1) + k
+        m = l + 1
+        call rij_and_rr(rij2, rr2, l, m)
+        rr2 = sqrt(rr2)
+        cs = dot_product(rij1, rij2)/rr1/rr2/Nga/(Nma+j-k-1)
+        persistent_length(k-j,2) = persistent_length(k-j,2) + cs
+      end do
+    end do
+    do j = 2, arm
+      do k = 1, Nma-2
+        do l = k+1, Nma-1
+          m = (i-1)*(arm*Nma+1) + (j-1)*Nma + k
+          n = m + 1
+          call rij_and_rr(rij1, rr1, m, n)
+          rr1 = sqrt(rr1)          
+          m = (i-1)*(arm*Nma+1) + (j-1)*Nma + l
+          n = n + 1
+          call rij_and_rr(rij2, rr2, m, n)
+          rr2 = sqrt(rr2)
+          cs = dot_product(rij1, rij2)/rr1/rr2/Nga/(Nma+k-l-1)/(arm-1)
+          persistent_length(l-k,3) = persistent_length(l-k,3) + cs
+        end do
+      end do
+    end do
+  end do
   !----------------h_dist--------------!
   n = arm*Nma + 1
   do i = 1, Nga
@@ -1831,13 +1881,29 @@ subroutine histogram
     alpha = alpha / salt_neighbor(i,10)
     alpha = alpha**(1./8)
     l = floor(alpha/(10./5000))
-    if (l==0) then
-      phi_topo(1,2) = phi_topo(1,2) + 1
-    elseif (l<5000) then
-      phi_topo(l,2) = phi_topo(l,2) + 1
-    else
-      phi_topo(5000,2) = phi_topo(5000,2) + 1
-    end if
+!     if (l==0) then
+!       phi_topo(1,2) = phi_topo(1,2) + 1
+!     elseif (l<5000) then
+!       phi_topo(l,2) = phi_topo(l,2) + 1
+!     else
+!       phi_topo(5000,2) = phi_topo(5000,2) + 1
+!     end if
+  end do
+
+  !--------------structure factor--------------!
+  do k = 1, 100
+    qxy(k) = exp(log(2*pi/Lx)+(k-1)*(log(10.)-log(2*pi/Lx))/100)
+  end do
+  do j = 1, 100
+    do k = 1, 100
+      S_qxy_sum_s = 0
+      S_qxy_sum_c = 0
+      do i = 1, Npe
+        S_qxy_sum_c = S_qxy_sum_c + cos(qxy(j)*pos(i,1)+qxy(k)*pos(i,2))
+        S_qxy_sum_s = S_qxy_sum_s + sin(qxy(j)*pos(i,1)+qxy(k)*pos(i,2))
+      end do
+      S_qxy(j,k) = S_qxy(j,k) + sqrt(S_qxy_sum_c**2+S_qxy_sum_s**2)/Npe/Npe
+    end do
   end do
 
   deallocate(salt_neighbor)
@@ -2144,6 +2210,27 @@ subroutine write_hist
   integer i,j
   real*8 :: ll
 
+  !----------structure factor----------!
+  open(22, file='./data/qxy.txt')
+    do i = 1, 100
+      write(22,220) qxy(i)
+    end do
+  close(22)
+  220 format(1F17.8)
+  open(23, file='./data/S_qxy.txt')
+    do i = 1, 100
+      write(23,'(100F17.8)') (S_qxy(i,j),j=1,100) 
+    end do
+  close(23)
+
+  !----------persistent length---------!
+  open(24,file='./persistent_length.txt')
+  do i = 1, Nma
+    persistent_length(i,1) = i
+    write(24,240) i*1., persistent_length(i,2), persistent_length(i,3)
+  end do
+  close(24)
+  240 format(3F17.8)
   !--------------bridging--------------!
   open(25,file='./data/bridging.txt')
   do i = 1, 19
@@ -2151,11 +2238,11 @@ subroutine write_hist
   end do
   close(25)
   250 format(1F17.8)
-  open(26,file='./data/topo.txt')
-  do i = 1, 5000
-    write(26,260) i*10./5000, phi_topo(i,2)
-  end do
-  close(26)
+!   open(26,file='./data/topo.txt')
+!   do i = 1, 5000
+!     write(26,260) i*10./5000, phi_topo(i,2)
+!   end do
+!   close(26)
   260 format(2F17.8)
   !-----------particle numbers---------!
   open(27,file='./data/particle_numbers.txt')

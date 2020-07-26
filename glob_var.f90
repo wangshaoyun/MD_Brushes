@@ -69,7 +69,7 @@ save
 
 contains
 
-  subroutine rij_and_rr(rij, rsqr, i, j)
+subroutine rij_and_rr(rij, rsqr, i, j)
   !-----------------------------------------!
   !compute displacement vector and displacement of two particles
   !input:
