@@ -343,7 +343,7 @@ subroutine data_allocate
   !
   !Histogram
   allocate( phi_topo(5000, 2)       )
-  allocate( phi_bridging(19)            ) 
+  allocate( phi_bridging(25)            ) 
   allocate( phi_tot(SizeHist,2)         )
   allocate( phi_l(SizeHist,2)           )
   allocate( phi_le(SizeHist,2)          )
@@ -636,7 +636,7 @@ subroutine continue_read_data(l)
   open(27,file='./data/Rg_dist.txt')
   open(28,file='./data/h_dist.txt')
     read(16,*) ((phi_topo(i,j),j=1,2),i=1,5000)
-    read(17,*) ( phi_bridging(i),i=1,19)
+    read(17,*) ( phi_bridging(i),i=1,25)
     read(18,*) ((grr(i,j),j=1,10),i=1,5000)
       gr_ps(:,2) = grr(:,2)
       gr_s_sa(:,2) = grr(:,3)
@@ -1416,7 +1416,7 @@ subroutine histogram
   real*8 :: h_avg, Rg2_avg, Rgz2_avg, Rgxy2_avg, del_r, a, ll
   integer, allocatable, dimension(:,:) :: salt_neighbor
   real*8, allocatable, dimension(:,:) :: topo_order
-  integer, dimension(3) :: s1, s2, s3
+  integer, dimension(3) :: s1, s2, s3, s4, s5, s6
 
   call force_distribution(fene_f,lj_force_PE,lj_force_ions,coulomb_f,Bond_dist)
 
@@ -1785,8 +1785,41 @@ subroutine histogram
           phi_bridging(18) = phi_bridging(18) + 1 !18: stem, branch
         end if
       end if
-    elseif (salt_neighbor(i,10) > 3) then
-      phi_bridging(19) = phi_bridging(19) + 1
+    elseif (salt_neighbor(i,10) == 4) then
+      call star_arm(s1(1),s1(2),s1(3),salt_neighbor(i,1))
+      call star_arm(s2(1),s2(2),s2(3),salt_neighbor(i,2))
+      call star_arm(s3(1),s3(2),s3(3),salt_neighbor(i,3))
+      call star_arm(s4(1),s4(2),s4(3),salt_neighbor(i,4))
+      if (s1(1)==s2(1) .and. s2(1)==s3(1) .and. s3(1)==s4(1))
+        phi_bridging(19) = phi_bridging(19) + 1
+      else
+        phi_bridging(20) = phi_bridging(20) + 1
+      end if
+    elseif (salt_neighbor(i,10) == 5) then
+      call star_arm(s1(1),s1(2),s1(3),salt_neighbor(i,1))
+      call star_arm(s2(1),s2(2),s2(3),salt_neighbor(i,2))
+      call star_arm(s3(1),s3(2),s3(3),salt_neighbor(i,3))
+      call star_arm(s4(1),s4(2),s4(3),salt_neighbor(i,4))
+      call star_arm(s5(1),s5(2),s5(3),salt_neighbor(i,5))
+      if (s1(1)==s2(1) .and. s2(1)==s3(1) .and. s3(1)==s4(1) .and. s4(1)==s5(1))
+        phi_bridging(21) = phi_bridging(21) + 1
+      else
+        phi_bridging(22) = phi_bridging(22) + 1
+      end if
+    elseif (salt_neighbor(i,10) == 6) then
+      call star_arm(s1(1),s1(2),s1(3),salt_neighbor(i,1))
+      call star_arm(s2(1),s2(2),s2(3),salt_neighbor(i,2))
+      call star_arm(s3(1),s3(2),s3(3),salt_neighbor(i,3))
+      call star_arm(s4(1),s4(2),s4(3),salt_neighbor(i,4))
+      call star_arm(s5(1),s5(2),s5(3),salt_neighbor(i,5))
+      call star_arm(s6(1),s6(2),s6(3),salt_neighbor(i,6))
+      if (s1(1)==s2(1) .and. s2(1)==s3(1) .and. s3(1)==s4(1) .and. s4(1)==s5(1) .and. s5(1)==s6(1) )
+        phi_bridging(23) = phi_bridging(23) + 1
+      else
+        phi_bridging(24) = phi_bridging(24) + 1
+      end if
+    else
+      phi_bridging(25) = phi_bridging(25) + 1
     end if
   end do
 
